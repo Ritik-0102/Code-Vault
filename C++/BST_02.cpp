@@ -43,53 +43,55 @@ TreeNode* Build_BST(vector<int> &v){
 }
 
 // Helper function to find the Inorder Successor (Smallest in Right Subtree)
-TreeNode* findMin(TreeNode* node) {
-    while (node->left != NULL) {
-        node = node->left;
-    }
-    return node;
-}
-
-TreeNode* DeleteNode(TreeNode* Root, int key) {
-    if (Root == NULL) return Root;
-
-    // 1. SEARCH for the node
-    if (key < Root->val) {
-        Root->left = DeleteNode(Root->left, key);
-    } 
-    else if (key > Root->val) {
-        Root->right = DeleteNode(Root->right, key);
-    } 
-    else {
-        // We found the node to delete!
-
-        // CASE 1: No child (Leaf Node)
-        // CASE 2: One child
-        if (Root->left == NULL) {
-            TreeNode* temp = Root->right;
-            delete Root;
-            return temp;
-        } 
-        else if (Root->right == NULL) {
-            TreeNode* temp = Root->left;
-            delete Root;
-            return temp;
+TreeNode* FindIS(TreeNode* root){
+        while(root->left != nullptr){
+            root = root->left;
         }
 
-        // CASE 3: Two children
-        // Find Inorder Successor (Smallest value in the right subtree)
+        return root;
+    }
+
+    TreeNode* deleteNode(TreeNode* root, int key){
+        if(root == nullptr){
+            return nullptr;
+        }
+
+        if(root->val > key){
+            root->left = deleteNode(root->left,key);
+        }
+        else if(root->val < key){
+            root->right = deleteNode(root->right,key);
+        }
         else{
-        TreeNode* Inorder_Successor = findMin(Root->right);
+            // root->val == key
 
-        // Copy the successor's content to this node
-        Root->val = Inorder_Successor->val;
+            // Case 1 & 2 : when there is 0 OR 1 childs exist for node to be deleted
+            if(root->left == nullptr){
+                TreeNode* temp = root->right;
+                delete root;
+                return temp;
+            }
+            else if(root->right == nullptr){
+                TreeNode* temp = root->left;
+                delete root;
+                return temp;
+            }
+            else{
+                // Case 3 : when there is 2 childs exist for node to be deleted
 
-        // Delete the successor (which is now a duplicate in the right subtree)
-        Root->right = DeleteNode(Root->right, Inorder_Successor->val);
+                // 1. Find Inorder Successor
+                TreeNode* IS = FindIS(root->right);
+
+                // 2. Now copy value IS into root node 
+                root->val = IS->val;
+
+                // 3. now delete the IS
+                root->right = deleteNode(root->right,IS->val);
+            }
         }
+
+        return root;
     }
-    return Root;
-}
 
 void Inorder_Traversal(TreeNode* Root){
     if(Root==NULL){
@@ -110,7 +112,7 @@ int main(){
     Inorder_Traversal(Root);
     cout << endl;
     
-    Root=DeleteNode(Root,3);
+    Root=deleteNode(Root,3);
     
     Inorder_Traversal(Root);
     cout << endl;
