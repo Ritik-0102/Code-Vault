@@ -2,7 +2,12 @@
 
 // It means we need to minimum difference between the values of any two nodes
 
+// we will use a prev pointer to track the previous node
+// and while Inorder traversal we will check the difference between current node and previous node
+// and update the minimum difference
+
 #include<iostream>
+#include<climits>
 
 using namespace std;
 
@@ -23,10 +28,10 @@ TreeNode* previous=NULL;
 
 int min_Diff_in_BST_nodes(TreeNode* Root){
     if(Root==NULL){
-        return INT8_MAX;
+        return INT_MAX;
     }
 
-    int ans=INT8_MAX;
+    int ans=INT_MAX;
 
     if(Root->left!=NULL){
         int left_min=min_Diff_in_BST_nodes(Root->left);
@@ -37,7 +42,7 @@ int min_Diff_in_BST_nodes(TreeNode* Root){
         ans=min(ans,Root->val - previous->val);
     }
 
-    previous=Root;
+    previous = Root;
 
     if(Root->right!=NULL){
         int Right_min=min_Diff_in_BST_nodes(Root->right);
@@ -45,57 +50,6 @@ int min_Diff_in_BST_nodes(TreeNode* Root){
     }
 
     return ans;
-}
-
-
-
-#include <iostream>
-#include <climits> // Required for INT_MAX
-#include <algorithm>
-
-using namespace std;
-
-class TreeNode {
-public:
-    int val;
-    TreeNode* left;
-    TreeNode* right;
-
-    TreeNode(int data) {
-        val = data;
-        left = NULL;
-        right = NULL;
-    }
-};
-
-// Global variables to track state across recursive calls
-TreeNode* prevNode = NULL;
-int minDiff = INT_MAX;
-
-void inorder(TreeNode* root) {
-    if (root == NULL) return;
-
-    // 1. Traverse Left
-    inorder(root->left);
-
-    // 2. Process Current Node
-    if (prevNode != NULL) {
-        // Difference between current and previous in sorted order
-        minDiff = min(minDiff, root->val - prevNode->val);
-    }
-    prevNode = root; // Update previous to current
-
-    // 3. Traverse Right
-    inorder(root->right);
-}
-
-int getMinimumDifference(TreeNode* root) {
-    // Reset globals in case of multiple test cases
-    prevNode = NULL;
-    minDiff = INT_MAX;
-    
-    inorder(root);
-    return minDiff;
 }
 
 int main() {
@@ -106,7 +60,7 @@ int main() {
     root->left->left = new TreeNode(1);
     root->left->right = new TreeNode(3);
 
-    cout << "Minimum Difference: " << getMinimumDifference(root) << endl;
+    cout << "Minimum Difference: " << min_Diff_in_BST_nodes(root) << endl;
 
     return 0;
 }
