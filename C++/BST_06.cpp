@@ -1,5 +1,8 @@
 // Kth smallest element in a BST
 
+// while doing Inorder traversal we will keep track of the number of nodes visited
+// and if the number of nodes visited is equal to k then we will return the value of current node
+
 #include<iostream>
 #include<vector>
 
@@ -50,11 +53,9 @@ int Kth_Smallest_BST(TreeNode* Root,int k){
         return -1;
     }
 
-    if(Root->left!=NULL){
-        int left= Kth_Smallest_BST(Root->left,k);
-        if(left!=-1){
-            return left;
-        }
+    int left= Kth_Smallest_BST(Root->left,k);
+    if(left!=-1){
+        return left;
     }
     
     i++;
@@ -62,14 +63,7 @@ int Kth_Smallest_BST(TreeNode* Root,int k){
         return Root->val;
     }
     
-    if(Root->right!=NULL){
-        int right= Kth_Smallest_BST(Root->right,k);
-        if(right!=-1){
-            return right;
-        }
-    }
-
-    return -1;
+    return Kth_Smallest_BST(Root->right,k);
 }
 
 int main(){
