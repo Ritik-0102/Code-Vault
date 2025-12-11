@@ -1,5 +1,8 @@
 // Kth Largest element in a BST
 
+// while doing Reverse Inorder traversal we will keep track of the number of nodes visited
+// and if the number of nodes visited is equal to k then we will return the value of current node
+
 #include<iostream>
 #include<vector>
 
