@@ -1,5 +1,9 @@
 // Lowest Common Ancestor
 
+// step 1: if p & q are both less than root value then we search LCA in left subtree
+// step 2: if p & q are both greater than root value then we search LCA in right subtree
+// step 3: if p & q lies in different branches then we return root (one is in left subtree and other is in right subtree) OR (one is in left or right subtree and other is in root)
+
 #include<iostream>
 
 using namespace std;
