@@ -2,6 +2,15 @@
 
 // You are given the root of a binary search tree (BST), where the values of exactly two nodes of the tree were swapped by mistake. Recover the tree without changing its structure.
 
+// We can swap the values of the nodes in the following way:
+// 1. first we will find the anamoly pair of nodes (i.e. the nodes which are not in sorted order)
+// 2. we store the value of fist node of first pair in a temp variable
+// 3. we store the second node of last pair in a temp variable
+// 4. we swap the values of first node of first pair and second node of last pair
+
+// Time Complexity: O(n) - We traverse the tree once to find the anamoly pair and then swap the values of the nodes in the pair.
+// Space Complexity: O(1) - We only use a constant amount of space to store the temporary variables.
+
 #include<iostream>
 
 using namespace std;
