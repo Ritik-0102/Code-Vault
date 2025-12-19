@@ -30,8 +30,6 @@ class Tree_Node{
     }
 };
 
-// 1st Approach
-
 // Time Complexity :- O(nlogn)    n for traversal & logn for find() function
 // Space Complexity :- O(n)
 
@@ -66,12 +64,14 @@ void Top_view(Tree_Node* Root){
     }
 }
 
-// 2nd Approach 
-
-// In this approach we are using one queue to store all the left node values & second queue to store all the right node values
-// and then print first queue in reverse order and second queue in original order
-
 int main(){
+    // Tree Node
+    //      1
+    //     / \
+    //    2   3
+    //       / \
+    //      4   5
+
     Tree_Node* Root=new Tree_Node(1);
     Root->left=new Tree_Node(2);
     Root->right=new Tree_Node(3);
