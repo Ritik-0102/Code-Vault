@@ -2,3 +2,9 @@
 '.\Git & GitHub\'
 
 *.exe
+
+# Ignore all .exe files inside the Java folder
+Java/*.exe
+
+# Ignore all .class files inside the Java folder
+Java/*.class
