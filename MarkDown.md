@@ -49,10 +49,6 @@ Blockquote
 
 ---
 
-Horizontal Rule
-
-***
-
 Code
 
 ```Java
