@@ -40,7 +40,27 @@ class Linked_List {
         return;
     }
 
-    public void Remove_First()
+    public Node Remove_First(){
+        if(head==null || head.next==null){
+            return null;
+        }
+
+        head=head.next;
+        return head;
+    }
+
+    public Node Remove_Last(){
+        if(head==null || head.next==null){
+            return null;
+        }
+
+        Node curr=head;
+        while(curr.next!=null){
+            curr=curr.next;
+        }
+        curr.next=curr.next.next;
+        return head;
+    }
 
     public void Print_Linked_List(){
         if(head==null){
@@ -66,6 +86,14 @@ class Linked_List_00{
         List.Add_First(3);
         List.Add_First(4);
         List.Add_First(5);
+
+        List.Print_Linked_List();
+
+        List.head=List.Remove_First();
+
+        List.Print_Linked_List();
+
+        List.head=List.Remove_Last();
 
         List.Print_Linked_List();
     }
