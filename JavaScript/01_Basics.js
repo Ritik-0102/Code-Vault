@@ -6,6 +6,14 @@ Name = "Ritik";
 age= 21;
 isTrue = true;
 
+// This is an alert box that will display a message to the user.
+alert("Hello, this is an alert!");
+
+// Prompt is used to take input from the user.
+const userName = prompt("Please enter your name:");
+console.log("Hello, " + userName + "!");
+
+
 
 // Data types in JavaScript :-
 
@@ -38,13 +46,17 @@ const person = {
 console.log(person); // Output: { name: 'Ritik', age: 21, isStudent: true, hobbies: [ 'Reading', 'Coding', 'Sports' ], address: { city: 'New Delhi', country: 'India', pincode: 110001 } }
 console.log(typeof person); // Output: object
 
+
+
 // Operators in JavaScript :-
+
 // Arithmetic Operators
 console.log(1 + 1); // Output: 2
 console.log(5 - 3); // Output: 2
 console.log(4 * 5); // Output: 20
 console.log(10 / 2); // Output: 5
 console.log(10 % 3); // Output: 1
+
 
 // Assignment Operators
 let x = 5;
@@ -67,6 +79,7 @@ let b = 5;
 b %= 3; // Equivalent to b = b % 3;
 console.log(b); // Output: 2
 
+
 // Comparison Operators
 console.log(5 > 3); // Output: true
 console.log(5 < 3); // Output: false
@@ -74,6 +87,7 @@ console.log(5 >= 3); // Output: true
 console.log(5 <= 3); // Output: false
 console.log(5 == "5"); // Output: true (loose equality)
 console.log(5 === "5"); // Output: false (strict equality)
+
 
 // Equality Operators
 console.log(5 == 5); // Output: true
@@ -86,11 +100,18 @@ console.log(5 !== 5); // Output: false
 console.log(true && false); // Output: false
 console.log(true || false); // Output: true
 
+
 // Bitwise Operators
 console.log(~5); // Output: -6
+// Example: 5 in binary is 0101, so ~5 is 1010 in binary, which is -6 in decimal.
 console.log(5 & 3); // Output: 1
+// Example: 5 in binary is 0101 and 3 in binary is 0011, so 5 & 3 is 0001 in binary, which is 1 in decimal.
 console.log(5 | 3); // Output: 7  
+// Example: 5 in binary is 0101 and 3 in binary is 0011, so 5 | 3 is 0111 in binary, which is 7 in decimal.
 console.log(5 ^ 3); // Output: 6
+// Example: 5 in binary is 0101 and 3 in binary is 0011, so 5 ^ 3 is 0110 in binary, which is 6 in decimal.
+
+
 
 // Assignment Operators
 x = 5;
@@ -117,15 +138,4 @@ console.log(b); // Output: 4
 // Ternary Operator
 const isStudent = true;
 console.log(isStudent ? "Yes" : "No"); // Output: Yes
-
-// Nullish Coalescing Operator
-const name = null;
-const age = 21;
-console.log(name ?? "Ritik"); // Output: Ritik
-console.log(age ?? 21); // Output: 21
-
-// Spread Operator
-const numbers = [1, 2, 3];
-const numbersCopy = [...numbers];
-console.log(numbersCopy); // Output: [1, 2, 3]
 
