@@ -312,3 +312,4 @@ is ‘admin’, and the default password is ‘password’.
 
 ## Step 18: Create a Virtual Machine (Instance)
 
+tiny core iso
