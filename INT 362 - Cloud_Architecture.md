@@ -298,7 +298,16 @@ is ‘admin’, and the default password is ‘password’.
 
 ## Snapshots (UI Quick Installation)
 
-![CloudStack UI Installation]('CloudStack UI 1.png')
+![CloudStack UI Installation](CloudStack_UI_1.png)
+![CloudStack UI Installation](CloudStack_UI_2.png)
+![CloudStack UI Installation](CloudStack_UI_3.png)
+![CloudStack UI Installation](CloudStack_UI_4.png)
+![CloudStack UI Installation](CloudStack_UI_5.png)
+![CloudStack UI Installation](CloudStack_UI_6.png)
+![CloudStack UI Installation](CloudStack_UI_7.png)
+![CloudStack UI Installation](CloudStack_UI_8.png)
+![CloudStack UI Installation](CloudStack_UI_9.png)
+![CloudStack UI Installation](CloudStack_UI_10.png)
 
 
 ## Step 18: Create a Virtual Machine (Instance)
