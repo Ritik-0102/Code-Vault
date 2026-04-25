@@ -159,3 +159,147 @@ kvm_intel 55496 0
 kvm 337772 1 kvm_intel
 kvm_amd # if you are in AMD cpu
 ```
+
+## Step 13: NFS Setup
+
+```bash
+dnf -y install nfs-utils
+```
+
+We now need to configure NFS to serve up two different shares. This is handled in the /etc/exports
+file. We will create two shares, one for the CloudStack management server and one for the hypervisors.
+
+```bash
+/export/secondary *(rw,async,no_root_squash,no_subtree_check)
+/export/primary *(rw,async,no_root_squash,no_subtree_check)
+```
+```bash
+mkdir -p /export/primary
+mkdir /export/secondary
+```
+
+ensure that the domain setting in /etc/idmapd.conf is uncommented and set as follows:
+
+```ini
+Domain = local
+```
+
+```bash
+systemctl enable rpcbind
+systemctl enable nfs-server
+systemctl start rpcbind
+systemctl start nfs-server
+```
+
+
+
+## Step 14: System Template Setup
+
+
+```bash
+/usr/share/cloudstack-common/scripts/storage/secondary/cloud-install-sys-tmplt -m /export/secondary -u http://download.cloudstack.org/systemvm/4.22/systemvmtemplate-4.22.0-x86_64-kvm.qcow2.bz2 -h kvm -F
+```
+
+## Step 15: Some Final Configurations (Before UI Access)
+
+```bash
+exportfs -arv
+systemctl enable --now nfs-server
+```
+
+Enable Root SSH Login in Rocky Linux :-
+
+```bash
+nano /etc/ssh/sshd_config
+```
+Scroll through the file and look for a line that says #PermitRootLogin prohibit-password or #PermitRootLogin yes
+
+Change it to 
+
+```bash
+PermitRootLogin yes
+PasswordAuthentication yes
+```
+
+```bash
+systemctl restart sshd
+```
+
+```bash
+sudo nano /etc/sudoers
+```
+Scroll down to the bottom and add the following line:
+
+```bash
+cloudstack ALL=(ALL) NOPASSWD: ALL
+Defaults:cloudstack !requiretty
+```
+
+```bash
+sudo reboot
+```
+
+## Step 16: UI Access
+
+To get access to CloudStack’s web interface, merely point your browser to the IP
+address of your machine e.g. http://172.16.10.2:8080/client The default username
+is ‘admin’, and the default password is ‘password’.
+
+## Step 17: Quick Installation
+
+- Zone Type: Core
+- Core Zone Type: Basic
+- Zone Details:
+    - Name: Zone-1
+    - Ipv4 DNS1: 8.8.8.8
+    - Ipv4 DNS2: 8.8.4.4
+    - Internal DNS1: 170.237.43 (MY IP ADDRESS)
+    - Internal DNS2: 8.8.4.4
+
+- Network :
+    - Physical Network: (default)
+    - Pod :
+        - Pod Name: Pod-1
+        - Reserved system gateway : 10.170.237.1
+        - Reserved system netmask : 255.255.255.0
+        - Start reserved system IP : 10.170.237.100
+        - End reserved system IP : 10.170.237.120
+    - Guest Traffic :
+        - Guest gateway: 10.170.237.1
+        - Guest netmask: 255.255.255.0
+        - Guest start IP: 10.170.237.150
+        - Guest end IP: 10.170.237.200
+- Add Resources :
+    - Cluster :
+        - Cluster Name: Cluster-1
+        - Architecture: AMD 64 bits (x86_64)
+    - IP Address :
+        - Host Name: 10.170.237.43
+        - Username: root
+        - Password: password
+        - Tags: Leave this blank
+    - Primary Storage :
+        - Name: Primary-Storage-1
+        - Scope: Cluster
+        - Protocol: nfs
+        - Server: 10.170.237.43
+        - Path: /export/primary
+        - NFS mount options: (Empty)
+        - Provider: DefaultPrimary
+        - Storage Tags: (Empty)
+    - Secondary Storage :
+        - Provider : NFS
+        - Name: Secondary-Storage-1 (Optional)
+        - Server: 10.170.237.43
+        - Path: /export/secondary
+
+- Launch 
+- Register Template
+
+## Snapshots (UI Quick Installation)
+
+![CloudStack UI Installation]('CloudStack UI 1.png')
+
+
+## Step 18: Create a Virtual Machine (Instance)
+
