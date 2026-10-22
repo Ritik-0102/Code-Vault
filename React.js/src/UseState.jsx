@@ -1,21 +1,47 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 const UseState = () => {
 
-  let a = 0;
+  // Initial value of a is 0 with the help of useState hook 
+  const [a, setA] = useState(0);
 
-  function btnClick() {
-    console.log('Button clicked');
-    a++;
-    console.log(a);
+  // Function to change the value of a with the help of setA function
+  function IncreaseValue() {
+    setA(a + 1);
+  }
+
+  function DecreaseValue() {
+    setA(a - 1);
+  }
+
+  // how to change the values of a Array
+  const [arr, setArr] = useState([1, 2, 3]);
+
+  function AddItem() {
+    setArr([...arr, 4]);
+  }
+
+  // How to change the value of a Object
+  const [obj, setObj] = useState({ a: 1, b: 2 });
+
+  function ChangeObj() {
+    setObj({ ...obj, a: 2, b: 3 });
   }
 
   return (
     <div>
       <h1> Hooks - UseState </h1>
 
-      <button onClick={btnClick}>Click Me</button>
-      
+      <h2> Value of a is {a} </h2>
+
+      <button onClick={IncreaseValue}> Increase </button>
+      <button onClick={DecreaseValue}> Decrease </button>
+
+      <h2> Value of arr is {arr.join(', ')} </h2>
+      <button onClick={AddItem}> Add Item </button>
+
+      <h2> Value of obj is a: {obj.a}, b: {obj.b} </h2>
+      <button onClick={ChangeObj}> Change Object </button>
     </div>
   )
 }
