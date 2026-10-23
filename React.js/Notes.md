@@ -50,35 +50,63 @@ const App = () => {
 export default App
 ```
 
-### useEffect
-it will run a function when the component is mounted.
+### Form Handling & Preventing Page Refresh
 
 ```js
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 
-const App = () => {
-  const [count, setCount] = useState(0);
+const Form_Handling = () => {
 
-  useEffect(() => {
-    console.log('Component mounted');
-  }, []);
-  
+  // This function Prevents the form to refresh the page when the submit button is clicked
+  const submitHandler = (event) => {
+    event.preventDefault()
+    console.log('Form submitted');
+  }
+
   return (
     <div>
-      <h1>Count is {count}</h1>
-      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <form onSubmit={submitHandler}>
+        <input type="text" name="name" placeholder="Enter your name" />
+        <button type="submit">Submit</button>
+      </form>
     </div>
   )
 }
 
-export default App
-```
-
-### useContext
-it will create a context for us.
+export default Form_Handling
 
 
-## State
-image of state
+### Two-Way Binding
 
-## Props
+```js
+import React, { useState } from 'react'
+
+const Two_Way_Binding = () => {
+
+  const [title, setTitle] = useState('');
+
+  const submitHandler = (e) => {
+    e.preventDefault();
+    console.log("Form Submitted By : ", title);
+
+    // Reset the Form after Buttom is pressed
+    setTitle('');
+  } 
+  
+  return (
+    <div>
+      <form onSubmit = {(e) => {
+        submitHandler(e);
+      }} >
+        <input type='text' placeholder='Enter Your Name' 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)} />
+        <button>Submit</button>
+      </form>
+    </div>
+  )
+}
+
+export default Two_Way_Binding
+
+
