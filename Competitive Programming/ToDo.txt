@@ -1,0 +1,6 @@
+https://lightoj.com/problem/ray-gun  
+
+https://www.spoj.com/problems/RAYGUN/?__cf_chl_tk=EzBHkj3Olt4rYN8SHvy7QPh1ncKbgUp0PTixFB1_dr8-1788243252-1.0.1.1-zcAV6q0Oxlq0vFbZKDUlWlOCzC.x9OWnioeQblWZe.k
+
+// https://www.geeksforgeeks.org/dsa/coprime-counting/
+
