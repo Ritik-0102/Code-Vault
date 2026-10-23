@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Particle Engine</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 2;
+            pointer-events: none;
+            width: 100%;
+        }
+        h1 {
+            font-size: 2.8rem;
+            color: #202124;
+            margin-bottom: 10px;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+        }
+        p {
+            color: #5f6368;
+            font-size: 1rem;
+        }
+        .link {
+            color: #1a73e8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <h1>You have successfully authenticated.</h1>
+        <p>You should be redirected back to the product. <span class="link">Click here</span> if not working.</p>
+    </div>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let particles = [];
+        let centerX, centerY;
+        
+        // Physics constants
+        const MOUSE_RADIUS = 150;
+        const REPULSION_STRENGTH = 4;
+        const SPRING_TENSION = 0.05;
+        const FRICTION = 0.85;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            init();
+        }
+
+        let mouse = { x: -1000, y: -1000 };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouse.x = -1000;
+            mouse.y = -1000;
+        });
+
+        class Particle {
+            constructor(baseX, baseY, angle, distFromCenter) {
+                this.baseX = baseX;
+                this.baseY = baseY;
+                this.x = baseX + (Math.random() * 20 - 10); // Spawn with a slight scatter 
+                this.y = baseY + (Math.random() * 20 - 10);
+                this.vx = 0;
+                this.vy = 0;
+                
+                // Visual properties
+                this.angle = angle; // Orientation of the dash
+                this.distFromCenter = distFromCenter;
+                
+                // Dynamic sizing based on how far from center
+                this.size = Math.random() * 1.5 + 1.5;
+                this.length = Math.random() * 4 + 4;
+                
+                // Fade out at the edges
+                const maxDist = Math.min(canvas.width, canvas.height) * 0.6;
+                this.alpha = Math.max(0.1, 1 - (distFromCenter / maxDist));
+                
+                // Assign Google-esque colors based on angle
+                let hue = (angle * 180 / Math.PI) - 90; 
+                let adjustedHue = (hue + 360) % 360; 
+                // Color tweaks for richer palette
+                if (adjustedHue > 150 && adjustedHue < 250) adjustedHue += 20; 
+                this.color = `hsla(${adjustedHue}, 85%, 55%, ${this.alpha})`;
+                
+                // Random mass for varied physics responses
+                this.mass = Math.random() * 0.5 + 0.5;
+            }
+
+            update() {
+                // 1. Mouse Repulsion Force
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < MOUSE_RADIUS) {
+                    let force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS;
+                    // Push away from mouse
+                    let pushAngle = Math.atan2(dy, dx);
+                    this.vx -= Math.cos(pushAngle) * force * REPULSION_STRENGTH / this.mass;
+                    this.vy -= Math.sin(pushAngle) * force * REPULSION_STRENGTH / this.mass;
+                }
+
+                // 2. Spring Force (pull back to origin)
+                this.vx += (this.baseX - this.x) * SPRING_TENSION;
+                this.vy += (this.baseY - this.y) * SPRING_TENSION;
+
+                // 3. Apply Friction & Velocity
+                this.vx *= FRICTION;
+                this.vy *= FRICTION;
+                
+                // Add a very subtle "idle breath" floating effect
+                this.x += this.vx + Math.cos(Date.now() * 0.001 + this.baseX) * 0.1;
+                this.y += this.vy + Math.sin(Date.now() * 0.001 + this.baseY) * 0.1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                // Draw a line oriented towards the center
+                let endX = this.x + Math.cos(this.angle) * this.length;
+                let endY = this.y + Math.sin(this.angle) * this.length;
+                
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(endX, endY);
+                
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.size;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+        }
+
+        function init() {
+            particles = [];
+            const numParticles = 2000;
+            const scalingFactor = 14; // Controls the spread of the spiral
+
+            // Use Phyllotaxis (Golden Angle) for highly organic, natural distribution
+            const goldenAngle = 137.5 * (Math.PI / 180);
+
+            for (let i = 0; i < numParticles; i++) {
+                // Calculate spiral coordinates
+                let r = scalingFactor * Math.sqrt(i);
+                let angle = i * goldenAngle;
+                
+                let x = centerX + r * Math.cos(angle);
+                let y = centerY + r * Math.sin(angle);
+                
+                // Add a little Perlin-like noise so it's not a *perfect* geometric spiral
+                let noiseX = (Math.random() - 0.5) * 8;
+                let noiseY = (Math.random() - 0.5) * 8;
+
+                // Orientation angle (pointing inward/outward)
+                let orientationAngle = Math.atan2(y - centerY, x - centerX);
+
+                particles.push(new Particle(x + noiseX, y + noiseY, orientationAngle, r));
+            }
+        }
+
+        function animate() {
+            // Create a slight trail effect by not clearing completely transparently
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let particle of particles) {
+                particle.update();
+                particle.draw();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        
+        // Start
+        resize();
+        animate();
+    </script>
+</body>
+</html>

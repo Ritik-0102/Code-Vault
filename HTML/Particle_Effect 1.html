@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Antigravity Particle Effect</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #ffffff; /* White background matching the image */
+            font-family: sans-serif;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        /* Optional: Add some dummy text to mimic the screenshot */
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 2;
+            pointer-events: none; /* Let the mouse interact with the canvas behind it */
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #202124;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Optional overlay text to make it look like the screenshot -->
+    <div class="content">
+        <h1>You have successfully authenticated.</h1>
+    </div>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let particleArray = [];
+        let adjustX = 0;
+        let adjustY = 0;
+
+        // Set canvas size to full window
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Mouse interaction object
+        let mouse = {
+            x: null,
+            y: null,
+            radius: 120 // Radius of the repulsion effect
+        }
+
+        window.addEventListener('mousemove', function(event) {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        // Clear mouse position when it leaves the screen
+        window.addEventListener('mouseout', function() {
+            mouse.x = undefined;
+            mouse.y = undefined;
+        });
+
+        // Particle Class
+        class Particle {
+            constructor(x, y, color, angle) {
+                this.x = x;
+                this.y = y;
+                this.baseX = x; // Base position to return to
+                this.baseY = y;
+                this.size = 2.5;
+                this.color = color;
+                this.angle = angle; // Used to rotate the dashes slightly
+                this.density = (Math.random() * 30) + 1; // Used for spring physics
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                // Rotate the dash so it points somewhat towards the center
+                ctx.rotate(this.angle + Math.PI / 2);
+                ctx.fillStyle = this.color;
+                // Draw a small elongated dash/rectangle instead of a circle
+                ctx.fillRect(-this.size, -this.size * 1.5, this.size * 2, this.size * 3);
+                ctx.restore();
+            }
+            
+            update() {
+                // Calculate distance between mouse and particle
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Repulsion logic
+                if (distance < mouse.radius) {
+                    let forceDirectionX = dx / distance;
+                    let forceDirectionY = dy / distance;
+                    let maxDistance = mouse.radius;
+                    // Push strength based on how close the mouse is
+                    let force = (maxDistance - distance) / maxDistance; 
+                    let directionX = forceDirectionX * force * this.density;
+                    let directionY = forceDirectionY * force * this.density;
+                    
+                    // Move particle away
+                    this.x -= directionX;
+                    this.y -= directionY;
+                } else {
+                    // Spring physics to return to base position
+                    if (this.x !== this.baseX) {
+                        let dx = this.x - this.baseX;
+                        this.x -= dx / 15; // The division factor determines spring speed
+                    }
+                    if (this.y !== this.baseY) {
+                        let dy = this.y - this.baseY;
+                        this.y -= dy / 15;
+                    }
+                }
+            }
+        }
+
+        function init() {
+            particleArray = [];
+            
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
+            
+            // Create concentric circles of particles
+            let rings = 25; // Number of rings
+            let spacing = 35; // Space between rings
+
+            for (let r = 1; r <= rings; r++) {
+                let currentRadius = r * spacing;
+                // The larger the ring, the more particles we need to keep it looking consistent
+                let particlesInRing = Math.floor(currentRadius / 2.5); 
+                
+                for (let i = 0; i < particlesInRing; i++) {
+                    let angle = (i / particlesInRing) * Math.PI * 2;
+                    
+                    let x = centerX + Math.cos(angle) * currentRadius;
+                    let y = centerY + Math.sin(angle) * currentRadius;
+                    
+                    // Generate color based on angle to create the rainbow sweep
+                    // -90 to shift the start of the color wheel
+                    let hue = (angle * 180 / Math.PI) - 90; 
+                    
+                    // Specific color adjustments to match the screenshot (Blue -> Purple -> Red -> Orange -> Yellow)
+                    // We map the standard HSL wheel roughly to this look
+                    let adjustedHue = (hue + 360) % 360; 
+                    if (adjustedHue > 180) adjustedHue = 220 + (adjustedHue - 180) * 0.5; // Stretch blues/purples
+                    
+                    let color = `hsl(${adjustedHue}, 80%, 55%)`;
+                    
+                    // Add some random scatter so it looks like a swarm/field rather than perfect lines
+                    let jitterX = (Math.random() - 0.5) * 15;
+                    let jitterY = (Math.random() - 0.5) * 15;
+
+                    particleArray.push(new Particle(x + jitterX, y + jitterY, color, angle));
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particleArray.length; i++) {
+                particleArray[i].draw();
+                particleArray[i].update();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Initialize and start animation
+        init();
+        animate();
+
+        // Handle window resizing
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init(); // Re-initialize particles to fit the new screen size center
+        });
+    </script>
+</body>
+</html>
