@@ -1665,7 +1665,7 @@ kbd {
         </div>
         <button class="modal-close" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p class="modal-desc">Connect to any public GitHub repository. Add a Personal Access Token to avoid API rate limits.</p>
+      <p class="modal-desc">Configure the repository to explore. API credentials are stored securely on the server and are never entered or saved in this browser.</p>
 
       <div class="form-group">
         <label for="usernameInput"><i class="fa-brands fa-github"></i> GitHub Username</label>
@@ -1674,13 +1674,6 @@ kbd {
       <div class="form-group">
         <label for="reponameInput"><i class="fa-solid fa-database"></i> Repository Name</label>
         <input type="text" id="reponameInput" class="form-input" value="Code-Vault" placeholder="repo-name">
-      </div>
-      <div class="form-group">
-        <label for="tokenInput"><i class="fa-solid fa-key"></i> GitHub Token <span class="optional-label">Optional</span></label>
-        <div class="password-wrapper">
-          <input type="password" id="tokenInput" class="form-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-          <button class="toggle-pw" id="togglePwBtn"><i class="fa-solid fa-eye"></i></button>
-        </div>
       </div>
 
       <div class="modal-actions">
@@ -1705,9 +1698,9 @@ kbd {
 let CONFIG = {
   username: (localStorage.getItem('gh_username') === 'Ritik0102-bit' ? 'Ritik-0102' : localStorage.getItem('gh_username')) || 'Ritik-0102',
   repo: localStorage.getItem('gh_repo') || 'Code-Vault',
-  token: localStorage.getItem('gh_token') || '',
   branch: 'main'
 };
+let repoLanguages = null;
 
 let allFilesFlat = [];
 let currentLoadedFile = null;
@@ -1746,8 +1739,6 @@ const closeModalBtn2 = document.getElementById('closeModalBtn2');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
 const usernameInput = document.getElementById('usernameInput');
 const reponameInput = document.getElementById('reponameInput');
-const tokenInput = document.getElementById('tokenInput');
-const togglePwBtn = document.getElementById('togglePwBtn');
 
 const quickOpenModal = document.getElementById('quickOpenModal');
 const quickOpenInput = document.getElementById('quickOpenInput');
@@ -1896,7 +1887,6 @@ function setupEventListeners() {
   settingsBtn.addEventListener('click', () => {
     usernameInput.value = CONFIG.username;
     reponameInput.value = CONFIG.repo;
-    tokenInput.value = CONFIG.token;
     settingsModal.classList.add('active');
   });
 
@@ -1905,21 +1895,13 @@ function setupEventListeners() {
   closeModalBtn2.addEventListener('click', closeSettings);
   settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettings(); });
 
-  // Toggle password visibility
-  togglePwBtn.addEventListener('click', () => {
-    const isPassword = tokenInput.type === 'password';
-    tokenInput.type = isPassword ? 'text' : 'password';
-    togglePwBtn.innerHTML = `<i class="fa-solid ${isPassword ? 'fa-eye-slash' : 'fa-eye'}"></i>`;
-  });
 
   // Save config
   saveConfigBtn.addEventListener('click', () => {
     CONFIG.username = usernameInput.value.trim() || 'Ritik-0102';
     CONFIG.repo = reponameInput.value.trim() || 'Code-Vault';
-    CONFIG.token = tokenInput.value.trim();
     localStorage.setItem('gh_username', CONFIG.username);
     localStorage.setItem('gh_repo', CONFIG.repo);
-    localStorage.setItem('gh_token', CONFIG.token);
     settingsModal.classList.remove('active');
     openTabs = [];
     activeTabPath = null;
@@ -1996,84 +1978,129 @@ function toggleStats() {
 //  INIT APP (fetch repo + tree)
 // ============================================================
 async function initApp() {
+  if (CONFIG.username === 'Ritik0102-bit' || !CONFIG.username) CONFIG.username = 'Ritik-0102';
+  if (!CONFIG.repo) CONFIG.repo = 'Code-Vault';
   repoNameDisplay.textContent = `${CONFIG.username}/${CONFIG.repo}`;
   if (userAvatar) userAvatar.src = `https://github.com/${CONFIG.username}.png`;
-
-  fileTreeEl.innerHTML = `
-    <div class="tree-loading">
-      <div class="loading-skeleton"></div>
-      <div class="loading-skeleton" style="width:70%;"></div>
-      <div class="loading-skeleton" style="width:85%;"></div>
-      <div class="loading-skeleton" style="width:60%;"></div>
-      <div class="loading-skeleton" style="width:90%;"></div>
-    </div>`;
+  branchDisplay.textContent = CONFIG.branch || 'main';
+  fileTreeEl.innerHTML = `<div class="tree-loading"><div class="loading-skeleton"></div><div class="loading-skeleton" style="width:70%;"></div><div class="loading-skeleton" style="width:85%;"></div><div class="loading-skeleton" style="width:60%;"></div><div class="loading-skeleton" style="width:90%;"></div></div>`;
 
   try {
-    const headers = getFetchHeaders();
+    let repoData = null;
+    let treeItems = null;
+    repoLanguages = null;
+    let apiError = null;
 
-    // Fetch repo info & tree in parallel
-    const [repoRes, treeRes] = await Promise.all([
-      fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}`, { headers }),
-      fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/git/trees/HEAD?recursive=1`, { headers })
-    ]);
+    // On Vercel, use the server-side function. GITHUB_TOKEN remains on Vercel
+    // and is never sent to or stored in the browser.
+    if (window.location.protocol !== 'file:') {
+      try {
+        const params = new URLSearchParams({
+          owner: CONFIG.username,
+          repo: CONFIG.repo,
+          branch: CONFIG.branch || 'main'
+        });
+        const serverRes = await fetch(`/api/github-tree?${params.toString()}`);
+        if (!serverRes.ok) {
+          const problem = await serverRes.json().catch(() => ({}));
+          throw new Error(problem.error || `Server API returned HTTP ${serverRes.status}`);
+        }
+        const serverData = await serverRes.json();
+        repoData = serverData.repo || null;
+        treeItems = Array.isArray(serverData.tree) ? serverData.tree : null;
+        repoLanguages = serverData.languages || null;
+        if (!treeItems) throw new Error('The server API did not return a file tree.');
+      } catch (err) {
+        apiError = err;
+      }
+    }
 
-    if (!repoRes.ok) throw new Error(`Repo not found: ${repoRes.status}`);
-    if (!treeRes.ok) throw new Error(`Failed to load tree: ${treeRes.status}`);
+    // Local-file/Live Server fallback for development. This uses only public
+    // repository endpoints and never includes a private token in frontend code.
+    if (!treeItems) {
+      const apiBase = `https://api.github.com/repos/${encodeURIComponent(CONFIG.username)}/${encodeURIComponent(CONFIG.repo)}`;
+      try {
+        const [repoRes, treeRes] = await Promise.all([
+          fetch(apiBase, { headers: getFetchHeaders() }),
+          fetch(`${apiBase}/git/trees/${encodeURIComponent(CONFIG.branch || 'main')}?recursive=1`, { headers: getFetchHeaders() })
+        ]);
+        if (!repoRes.ok) throw new Error(`GitHub repository API returned HTTP ${repoRes.status}`);
+        if (!treeRes.ok) throw new Error(`GitHub tree API returned HTTP ${treeRes.status}`);
+        repoData = await repoRes.json();
+        const treeData = await treeRes.json();
+        treeItems = treeData.tree || [];
+        CONFIG.branch = repoData.default_branch || CONFIG.branch || 'main';
+        try {
+          const langRes = await fetch(`${apiBase}/languages`, { headers: getFetchHeaders() });
+          if (langRes.ok) repoLanguages = await langRes.json();
+        } catch (_) { /* file-count language breakdown remains available */ }
+      } catch (err) {
+        apiError = err;
+      }
+    }
 
-    const [repoData, treeData] = await Promise.all([repoRes.json(), treeRes.json()]);
-    CONFIG.branch = repoData.default_branch || 'main';
-    branchDisplay.textContent = CONFIG.branch;
+    // CDN fallback keeps public repository browsing available when the REST API
+    // is rate-limited or the page is opened locally.
+    if (!treeItems) {
+      const branch = CONFIG.branch || 'main';
+      const cdnUrl = `https://data.jsdelivr.com/v1/package/gh/${encodeURIComponent(CONFIG.username)}/${encodeURIComponent(CONFIG.repo)}@${encodeURIComponent(branch)}`;
+      const cdnRes = await fetch(cdnUrl);
+      if (!cdnRes.ok) {
+        const reason = apiError ? apiError.message : 'GitHub API is unavailable';
+        throw new Error(`Could not load repository tree (${reason}; CDN HTTP ${cdnRes.status}). Check repository and branch.`);
+      }
+      const cdnData = await cdnRes.json();
+      treeItems = [];
+      const flattenCdnTree = (nodes, prefix = '') => {
+        (nodes || []).forEach(node => {
+          const path = prefix ? `${prefix}/${node.name}` : node.name;
+          const isDirectory = node.type === 'directory' || Array.isArray(node.files);
+          treeItems.push({ path, type: isDirectory ? 'tree' : 'blob' });
+          if (isDirectory) flattenCdnTree(node.files || [], path);
+        });
+      };
+      flattenCdnTree(cdnData.files || []);
+      showToast('Loaded public repository using CDN fallback', 'info', 3500);
+    }
 
-    // Update stats
-    document.getElementById('statStars').textContent = formatNumber(repoData.stargazers_count || 0);
-    document.getElementById('statForks').textContent = formatNumber(repoData.forks_count || 0);
+    if (repoData) {
+      CONFIG.branch = repoData.default_branch || CONFIG.branch || 'main';
+      document.getElementById('statStars').textContent = formatNumber(repoData.stargazers_count || 0);
+      document.getElementById('statForks').textContent = formatNumber(repoData.forks_count || 0);
+      document.getElementById('statSize').textContent = `${((repoData.size || 0) / 1024).toFixed(1)} MB`;
+    } else {
+      document.getElementById('statStars').textContent = '—';
+      document.getElementById('statForks').textContent = '—';
+      document.getElementById('statSize').textContent = '—';
+    }
+    branchDisplay.textContent = CONFIG.branch || 'main';
 
-    const sizeMB = ((repoData.size || 0) / 1024).toFixed(1);
-    document.getElementById('statSize').textContent = sizeMB + ' MB';
-
-    // Filter files
-    allFilesFlat = treeData.tree.filter(item => {
-      const p = item.path;
-      return !p.startsWith('.git/') &&
-             !p.includes('node_modules/') &&
-             !p.includes('.expo/') &&
-             !p.endsWith('.exe') &&
-             !p.endsWith('.class') &&
-             !p.endsWith('.pdb') &&
-             !p.endsWith('.png') &&
-             !p.endsWith('.jpg') &&
-             !p.endsWith('.ico');
+    allFilesFlat = treeItems.filter(item => {
+      const path = item.path || '';
+      return !path.startsWith('.git/') && !path.includes('node_modules/') &&
+        !path.includes('.expo/') && !/\.(exe|class|pdb|png|jpg|jpeg|gif|ico|webp)$/i.test(path);
     });
 
-    const fileCount = allFilesFlat.filter(i => i.type === 'blob').length;
+    const fileCount = allFilesFlat.filter(item => item.type === 'blob').length;
     fileCountDisplay.textContent = `${fileCount} files`;
     document.getElementById('statFiles').textContent = fileCount;
-
     renderTree(allFilesFlat);
     renderLangBreakdown();
     fetchLanguages();
-
   } catch (err) {
-    fileTreeEl.innerHTML = `
-      <div style="padding:1.25rem;color:#ef4444;font-size:0.82rem;line-height:1.8;">
-        <i class="fa-solid fa-triangle-exclamation"></i> <b>Connection Failed</b><br>
-        ${err.message}<br>
-        <span style="color:var(--text-muted);font-size:0.75rem;">Try adding a GitHub Token in ⚙️ Settings to avoid rate limits.</span>
-      </div>`;
+    const safeMessage = String(err.message || err).replace(/[<>]/g, '');
+    fileTreeEl.innerHTML = `<div style="padding:1.25rem;color:#ef4444;font-size:.82rem;line-height:1.8"><b>⚠ Connection Failed</b><br>${safeMessage}<br><span style="color:var(--text-muted);font-size:.75rem">Check the repository, branch, and Vercel function deployment.</span><br><a href="https://github.com/${encodeURIComponent(CONFIG.username)}/${encodeURIComponent(CONFIG.repo)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-primary)">Open repository on GitHub ↗</a></div>`;
     fileCountDisplay.textContent = 'Error';
-    showToast('Failed to connect to GitHub API', 'error');
+    showToast('Could not load repository. See the Explorer error for details.', 'error', 5000);
   }
 }
-
 function formatNumber(n) {
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
   return String(n);
 }
 
 function getFetchHeaders() {
-  const h = { 'Accept': 'application/vnd.github.v3+json' };
-  if (CONFIG.token) h['Authorization'] = `token ${CONFIG.token}`;
-  return h;
+  return { 'Accept': 'application/vnd.github+json' };
 }
 
 // ============================================================
@@ -2118,28 +2145,25 @@ function renderLangBreakdown() {
 
 async function fetchLanguages() {
   try {
-    const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/languages`, {
-      headers: getFetchHeaders()
-    });
-    if (!res.ok) return;
-    const langs = await res.json();
+    let langs = repoLanguages;
+    if (!langs) {
+      const res = await fetch(`https://api.github.com/repos/${encodeURIComponent(CONFIG.username)}/${encodeURIComponent(CONFIG.repo)}/languages`, {
+        headers: getFetchHeaders()
+      });
+      if (!res.ok) return;
+      langs = await res.json();
+    }
     const total = Object.values(langs).reduce((a, b) => a + b, 0);
     if (!total) return;
-
     const sorted = Object.entries(langs).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const container = document.getElementById('langBreakdown');
     container.innerHTML = sorted.map(([name, bytes]) => {
       const ext = Object.entries(LANG_NAMES).find(([k, v]) => v === name)?.[0];
       const color = ext ? (LANG_COLORS[ext] || '#94a3b8') : '#94a3b8';
       const pct = ((bytes / total) * 100).toFixed(0);
-      return `
-        <div class="lang-bar-item">
-          <div class="lang-color-dot" style="background:${color};"></div>
-          <span class="lang-name">${name}</span>
-          <span class="lang-pct">${pct}%</span>
-        </div>`;
+      return `<div class="lang-bar-item"><div class="lang-color-dot" style="background:${color};"></div><span class="lang-name">${name}</span><span class="lang-pct">${pct}%</span></div>`;
     }).join('');
-  } catch (_) { /* silently ignore */ }
+  } catch (_) { /* file-count language breakdown remains available */ }
 }
 
 // ============================================================
@@ -2463,10 +2487,8 @@ async function handleDeepSearch(query) {
   fileTreeEl.innerHTML = `<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;"><i class="fa-solid fa-spinner fa-spin"></i> Scanning code files...</div>`;
 
   try {
-    const res = await fetch(
-      `https://api.github.com/search/code?q=${encodeURIComponent(query)}+repo:${CONFIG.username}/${CONFIG.repo}`,
-      { headers: getFetchHeaders() }
-    );
+    const params = new URLSearchParams({ owner: CONFIG.username, repo: CONFIG.repo, q: query });
+    const res = await fetch(`/api/github-tree?${params.toString()}`);
     if (!res.ok) throw new Error('Rate limit or search error');
     const data = await res.json();
 
@@ -2500,7 +2522,7 @@ async function handleDeepSearch(query) {
     searchModeBadge.style.background = '';
     searchModeBadge.style.color = '';
     fileTreeEl.innerHTML = `<div style="padding:1rem;color:#ef4444;font-size:0.8rem;">⚠️ Deep search failed or rate-limited.</div>`;
-    showToast('Deep search failed — try adding a GitHub Token', 'error');
+    showToast('Deep search failed — check the deployed API and repository permissions.', 'error');
     handleSearch({ target: { value: query } });
   }
 }
