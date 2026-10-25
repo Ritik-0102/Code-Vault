@@ -31,3 +31,14 @@ form {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.notes {
+  flex-wrap: initial;
+}
+.note {
+  height: 50;
+  width: 10;
+  justify-items: flex-start;
+  background-color: #6b263b;
+  color: rgb(240, 133, 63);
+}
