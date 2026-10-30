@@ -58,6 +58,7 @@ const Notes_App = () => {
         {notes.map(function (e,idx) {
           return <div key={idx} className='note'>
             <h2>{e.title}</h2>
+            <p>{e.description}</p>
           </div>
         })}
 
