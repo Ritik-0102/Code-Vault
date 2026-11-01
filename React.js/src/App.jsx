@@ -8,6 +8,7 @@ import Local_Storage from './Local_Storage'
 import API from './API_Calls'
 import Use_Effect from './Use_Effect'
 import Gallery_App from './Gallery_App'
+import React_Router_DOM from './React_Router_DOM'
 
 const App = () => {
   return (
@@ -39,6 +40,9 @@ const App = () => {
       <hr />
 
       <Gallery_App />
+      <hr />
+
+      <React_Router_DOM />
       <hr />
     </div>
 

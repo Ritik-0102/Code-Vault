@@ -1,0 +1,17 @@
+.Navbar {
+    background-color: rgb(118, 124, 34);
+    display: flex;
+}
+
+.Navbar div{
+    display: flex;
+    position: absolute;
+    right: 0;
+    padding: 20px 40px;
+    gap: 25px;
+    color: black;
+}
+
+.link {
+    color: white;
+}
