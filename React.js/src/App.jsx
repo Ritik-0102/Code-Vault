@@ -9,6 +9,7 @@ import API from './API_Calls'
 import Use_Effect from './Use_Effect'
 import Gallery_App from './Gallery_App'
 import React_Router_DOM from './React_Router_DOM'
+import Dynamic_Routing from './Dynamic_Routing'
 
 const App = () => {
   return (
@@ -43,6 +44,9 @@ const App = () => {
       <hr />
 
       <React_Router_DOM />
+      <hr />
+
+      <Dynamic_Routing />
       <hr />
     </div>
 

@@ -1,6 +1,10 @@
 /* To Use Tailwind CSS */
 /* @import "tailwindcss"; */
 
+/* Remove the single @import "tailwindcss"; line and use these two instead: */
+@import "tailwindcss/theme";
+@import "tailwindcss/utilities";
+
 body {
     margin: 0;
     padding: 0;
