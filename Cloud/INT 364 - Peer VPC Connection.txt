@@ -1,0 +1,66 @@
+Peering VPC connections :-
+
+VPC and Subnets :-
+
+vpc 1
+10.0.0.0/16
+subnet 1 :-
+10.0.1.0/24
+
+vpc 2
+172.16.0.0/16
+subnet 2 :-
+172.16.1.0/24
+
+Internet Gateways :-
+
+IGW 1 - attached to vpc 1
+IGW 2 - attached to vpc 2
+
+Peering Connections :-
+
+requesting vpc - vpc 1
+accepting vpc - vpc 2
+Action - Accept the peering request
+
+Route Tables :-
+
+Edit route table VPC 1 ->
+add route -> destination -> 172.16.0.0/16, target -> peering connection
+add route -> destination -> 0.0.0.0/0, target -> IGW 1
+
+Edit route table VPC 2 ->
+add route -> destination -> 10.0.0.0/16, target -> peering connection
+add route -> destination -> 0.0.0.0/0, target -> IGW 2
+
+Security Groups :-
+
+edit inbound rules of SG of vpc1 ->
+add rule 1 -> type - ALL ICMP IPv4, source - 172.16.0.0/16
+add rule 2 -> type - SSH, source - 0.0.0.0/0
+
+edit inbound rules of SG of vpc2 ->
+add rule 1 -> type - ALL ICMP IPv4, source - 10.0.0.0/16
+add rule 2 -> type - SSH, source - 0.0.0.0/0
+
+Launch EC2 Instances :-
+
+ec2-A ->
+network -> vpc 1
+subnet -> 10.0.1.0/24
+auto-assign public IP -> Enable
+security group -> attach SG of vpc1
+
+ec2-B ->
+network -> vpc 2
+subnet -> 172.16.1.0/24
+auto-assign public IP -> Enable
+security group -> attach SG of vpc2
+
+Connect and Ping :-
+
+Select ec2-A in the dashboard and launch EC2 Instance Connect.
+
+Type ping <private-ip-of-ec2-B> in the terminal.
+
+Verify the connection is working by checking for continuous 64-byte replies.

@@ -10,7 +10,7 @@ int main(){
     cout << "Enter the size of the fibonacci Series: ";
     cin >> n;
     
-    int arr[n];
+    int arr[1000000];
 
     arr[0]=0;
     arr[1]=1;
