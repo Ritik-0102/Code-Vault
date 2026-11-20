@@ -1,231 +1,140 @@
-# PostgreSQL Complete SQL Notes
+# PostgreSQL Notes
 
-## From beginner to LeetCode, interviews, and practical database work
+# Part A — Foundations
 
-**Goal:** Learn SQL using PostgreSQL, then solve SQL problems
-confidently on LeetCode and other practice platforms.
+## 1. What are SQL and PostgreSQL?
 
-These notes are a reference guide. Do not try to memorize every section
-at once. Work through the fundamentals, type every query yourself in VS
-Code, and solve problems topic by topic.
+- **Database:** an organised collection of data.
+- **DBMS:** software that stores and manages databases.
+- **Relational database:** stores data in tables that can be related through keys.
+- **SQL:** the language used to create, read, change, and manage relational data.
+- **PostgreSQL:** a relational DBMS that understands SQL and adds features such as `ILIKE`, `RETURNING`, `DISTINCT ON`, `FILTER`, and regular-expression operators.
 
-------------------------------------------------------------------------
+SQL is *declarative*: you describe the result you want; PostgreSQL decides how to retrieve it.
 
-## Contents
+### Basic writing rules
 
-1.  How SQL and PostgreSQL fit together
-2.  SQL statement categories
-3.  Database, schema, table, row, and column
-4.  PostgreSQL data types
-5.  Creating databases and tables
-6.  Constraints and keys
-7.  Inserting, selecting, updating, and deleting data
-8.  Filtering with `WHERE`
-9.  Sorting, limiting, and pagination
-10. NULL handling
-11. Expressions, operators, and `CASE`
-12. String functions
-13. Numeric and mathematical functions
-14. Date and time
-15. Aggregate functions, `GROUP BY`, and `HAVING`
-16. Joins
-17. Subqueries and correlated subqueries
-18. Set operations
-19. CTEs and recursive CTEs
-20. Window functions
-21. Conditional aggregation and common SQL patterns
-22. Data definition and schema changes
-23. Transactions and concurrency basics
-24. Views and materialized views
-25. Indexes and query performance
-26. Normalization and relationships
-27. PostgreSQL-specific features
-28. Query execution order
-29. LeetCode SQL patterns and templates
-30. Common mistakes and debugging
-31. Practice plan and checklist
-32. Quick reference sheet
+- SQL keywords are commonly written in uppercase. They are generally case-insensitive.
+- Unquoted PostgreSQL identifiers are folded to lowercase. Prefer names such as `student_id`.
+- Use single quotes for text and date literals: `'Ritik'`, `DATE '2026-01-01'`.
+- Double quotes are for identifiers and are usually avoidable.
+- End statements with `;`.
+- `--` starts a one-line comment; `/* ... */` makes a block comment.
+- A result has no guaranteed order without `ORDER BY`.
+- Use `IS NULL`, not `= NULL`.
+- Include column names in `INSERT` statements.
+- Check the `WHERE` clause before running `UPDATE` or `DELETE`.
 
-------------------------------------------------------------------------
-
-# 1. SQL and PostgreSQL
-
--   **SQL** is the language used to define, query, and manipulate
-    relational data.
--   **PostgreSQL** is a relational database management system that
-    executes SQL and provides additional features.
--   SQL is declarative: you usually specify *what result you want*, not
-    the exact algorithm for finding it.
--   PostgreSQL follows SQL standards in many areas but also has its own
-    syntax and features.
-
-### Basic rules
-
-1.  SQL keywords are conventionally written in uppercase, but SQL is
-    generally case-insensitive for keywords.
-2.  Unquoted identifiers such as `student_name` are folded to lowercase
-    by PostgreSQL.
-3.  Text literals use single quotes: `'Ritik'`.
-4.  Double quotes are for identifiers: `"Order"`; avoid quoted
-    identifiers unless necessary.
-5.  End statements with semicolons, especially when running multiple
-    statements.
-6.  Use `--` for a single-line comment and `/* ... */` for a block
-    comment.
-7.  Prefer explicit column lists in `INSERT` statements.
-8.  Never run an `UPDATE` or `DELETE` without checking whether the
-    intended `WHERE` condition is present.
-9.  SQL result rows have no guaranteed order unless `ORDER BY` is
-    specified.
-10. Use `IS NULL` and `IS NOT NULL`, not `= NULL`.
-
-Example:
-
-``` sql
--- Single-line comment
+```sql
+-- Show students whose marks are at least 80, highest marks first
 SELECT name, marks
 FROM students
 WHERE marks >= 80
 ORDER BY marks DESC;
 ```
+**Result:** the `name` and `marks` of qualifying students, sorted from highest to lowest.
 
-# 2. SQL statement categories
+## 2. SQL statement categories
 
-  -----------------------------------------------------------------------
-  Category                Purpose                 Common statements
-  ----------------------- ----------------------- -----------------------
-  DDL                     Define or change        `CREATE`, `ALTER`,
-                          structures              `DROP`, `TRUNCATE`
+| Category | Purpose | Common statements |
+|---|---|---|
+| DDL | Define/change structure | `CREATE`, `ALTER`, `DROP`, `TRUNCATE` |
+| DML | Change data | `INSERT`, `UPDATE`, `DELETE`, `MERGE` |
+| DQL | Read data (common teaching label) | `SELECT` |
+| DCL | Permissions | `GRANT`, `REVOKE` |
+| TCL | Transactions | `BEGIN`, `COMMIT`, `ROLLBACK`, `SAVEPOINT` |
 
-  DML                     Change data             `INSERT`, `UPDATE`,
-                                                  `DELETE`, `MERGE`
+Some books classify `SELECT` under DML; calling it DQL is a common teaching convention.
 
-  DQL (common teaching    Read data               `SELECT`
-  term)                                           
+## 3. Database objects and relationships
 
-  DCL                     Access permissions      `GRANT`, `REVOKE`
+- **Database:** named container for database objects.
+- **Schema:** namespace inside a database; the common default is `public`.
+- **Table:** rows and columns.
+- **Row:** one record.
+- **Column:** one property of a record.
+- **Primary key:** uniquely identifies a row.
+- **Foreign key:** connects a row to a key in another table.
+- **View:** saved query definition.
+- **Index:** data structure that can speed up certain lookups.
+- **Sequence/identity:** generates values, often IDs.
+- **Function, procedure, trigger:** programmable database objects.
 
-  TCL                     Transaction control     `BEGIN`, `COMMIT`,
-                                                  `ROLLBACK`, `SAVEPOINT`
-  -----------------------------------------------------------------------
+Useful PostgreSQL inspection queries:
 
-`SELECT` can also be considered part of DML in some classifications; the
-DQL category is a teaching convention.
-
-# 3. Database objects
-
--   **Database:** a named collection of database objects.
--   **Schema:** a namespace inside a database, often used to organize
-    tables and other objects. PostgreSQL's default schema is commonly
-    `public`.
--   **Table:** data arranged in rows and columns.
--   **Row:** one record.
--   **Column:** one attribute of a record.
--   **View:** a stored query presented like a table.
--   **Index:** a data structure that can speed up particular searches or
-    joins.
--   **Constraint:** a rule the database enforces.
--   **Sequence/identity:** a mechanism for generating numeric values.
--   **Function/procedure/trigger:** programmable database objects.
-
-In PostgreSQL, connect to a database before creating ordinary tables. A
-database connection is associated with one database at a time.
-
-Useful inspection queries:
-
-``` sql
-SELECT current_database();
-SELECT current_schema();
-SELECT version();
-SELECT CURRENT_USER;
+```sql
+SELECT current_database(); -- e.g. dbms_practice
+SELECT current_schema();   -- e.g. public
+SELECT CURRENT_USER;       -- e.g. postgres
+SELECT version();          -- PostgreSQL server version and platform
 ```
 
-# 4. PostgreSQL data types
+**Result:** one value per query describing the current connection/server.
 
-Choose types based on the meaning and range of data.
+## 4. Data types
 
-## Numbers
+Choose a type that matches the meaning of the value.
 
--   `SMALLINT`: small integer.
--   `INTEGER` / `INT`: standard integer.
--   `BIGINT`: larger integer.
--   `NUMERIC(p, s)` / `DECIMAL(p, s)`: exact decimal values, useful for
-    money-like quantities where exact arithmetic matters.
--   `REAL`, `DOUBLE PRECISION`: approximate floating-point values.
--   `SERIAL` / `BIGSERIAL`: older convenient sequence-backed integer
-    patterns; identity columns are generally preferred for new designs.
+### Numbers
 
-Examples:
+| Type | Use |
+|---|---|
+| `SMALLINT` | small whole number |
+| `INTEGER` / `INT` | normal whole number |
+| `BIGINT` | large whole number |
+| `NUMERIC(p,s)` / `DECIMAL(p,s)` | exact decimal |
+| `REAL`, `DOUBLE PRECISION` | approximate floating-point number |
+| `SERIAL`, `BIGSERIAL` | older sequence-backed ID shorthand |
 
-``` sql
-age INTEGER,
-price NUMERIC(10, 2),
-rating DOUBLE PRECISION
+`NUMERIC(p,s)` means **p total digits** and **s digits after the decimal point**. For example, `NUMERIC(8,2)` can store values such as `123456.78`. `NUMERIC(2)` does **not** mean two decimal places.
+
+```sql
+SELECT 5 / 2 AS integer_result,
+       5::NUMERIC / 2 AS decimal_result;
 ```
+**Result:** `2 | 2.5000000000000000`.
 
-## Text
+### Text
 
--   `TEXT`: variable-length text without a declared length limit.
--   `VARCHAR(n)`: variable-length text with a maximum length.
--   `CHAR(n)`: fixed-width, blank-padded text; rarely needed for
-    ordinary application fields.
+- `TEXT`: variable-length text; a good default in PostgreSQL.
+- `VARCHAR(n)`: variable-length text with a maximum length.
+- `CHAR(n)`: fixed-width, blank-padded text; uncommon for normal application fields.
 
-For most PostgreSQL text columns, `TEXT` is a perfectly reasonable
-choice. Use `VARCHAR(n)` when the maximum length is a meaningful rule.
+### Other types
 
-## Boolean
+- `BOOLEAN`: `TRUE`, `FALSE`, or `NULL`.
+- `DATE`: calendar date.
+- `TIME`: time of day.
+- `TIMESTAMP`: date and time without time-zone-aware instant semantics.
+- `TIMESTAMPTZ`: represents an instant; display depends on session time zone.
+- `INTERVAL`: duration.
+- `UUID`: unique identifier.
+- `JSON` / `JSONB`: JSON data; `JSONB` is usually more useful for querying/indexing.
+- `BYTEA`: binary data.
+- Arrays such as `INTEGER[]`.
+- `INET` / `CIDR`: network addresses/ranges.
 
-``` sql
-is_active BOOLEAN DEFAULT TRUE
+### Type conversion (casting)
+
+```sql
+SELECT CAST('123' AS INTEGER), '45.6'::NUMERIC(5,2);
 ```
+**Result:** `123 | 45.60`.
 
-Values are `TRUE`, `FALSE`, or `NULL` (unknown).
+Use `::type` or `CAST(value AS type)` to make conversions explicit.
 
-## Dates and times
+## 5. Creating databases and tables
 
--   `DATE`: calendar date.
--   `TIME`: time of day.
--   `TIMESTAMP`: date and time without a time-zone-aware instant.
--   `TIMESTAMPTZ`: timestamp with time-zone semantics; PostgreSQL stores
-    an instant and displays it using the session time zone.
--   `INTERVAL`: duration.
+Connect to a database before creating ordinary tables. `CREATE DATABASE` is normally run outside a transaction block.
 
-For event timestamps representing real-world instants, `TIMESTAMPTZ` is
-often appropriate.
-
-## Other useful types
-
--   `UUID`: universally unique identifier.
--   `JSON` / `JSONB`: JSON data; `JSONB` is commonly preferred for
-    querying/indexing JSON.
--   `BYTEA`: binary data.
--   Arrays, such as `INTEGER[]`.
--   Enumerated types (`CREATE TYPE ... AS ENUM`), useful when a fixed
-    set of values is appropriate.
--   `INET`, `CIDR`, and geometric types for specialized use cases.
-
-## Type conversion
-
-``` sql
-SELECT CAST('123' AS INTEGER);
-SELECT '123'::INTEGER;              -- PostgreSQL shorthand
-SELECT CAST(12.5 AS NUMERIC(5, 2));
+```sql
+CREATE DATABASE sql_practice;
 ```
-
-Avoid relying on accidental implicit conversions. Make conversions
-explicit when clarity matters.
-
-# 5. Creating databases and tables
-
-Create a database (run as a command outside a transaction block):
-
-``` sql
-CREATE DATABASE dbms_practice;
-```
+**Result:** database `sql_practice` is created if the name is available and permissions allow it.
 
 Create a table:
 
-``` sql
+```sql
 CREATE TABLE students (
     student_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -235,923 +144,855 @@ CREATE TABLE students (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ```
+**Result:** an empty `students` table is created with six columns and the listed rules.
 
-Add multiple rows:
+Insert sample data used in many examples below:
 
-``` sql
+```sql
 INSERT INTO students (student_id, name, age, city, marks)
 VALUES
     (1, 'Ritik', 20, 'Jaipur', 85),
     (2, 'Aman', 21, 'Delhi', 76),
-    (3, 'Priya', 19, 'Mumbai', 92);
+    (3, 'Priya', 19, 'Mumbai', 92),
+    (4, 'Neha', 20, 'Delhi', 88),
+    (5, 'Karan', 19, NULL, 67);
 ```
+**Result:** `INSERT 0 5` — five rows added.
 
-The number and order of values must match the listed columns. If a
-column has a default or allows `NULL`, it can be omitted.
+| student_id | name | age | city | marks |
+|---:|---|---:|---|---:|
+| 1 | Ritik | 20 | Jaipur | 85 |
+| 2 | Aman | 21 | Delhi | 76 |
+| 3 | Priya | 19 | Mumbai | 92 |
+| 4 | Neha | 20 | Delhi | 88 |
+| 5 | Karan | 19 | NULL | 67 |
 
 Create a table from a query:
 
-``` sql
+```sql
 CREATE TABLE high_scorers AS
 SELECT student_id, name, marks
 FROM students
 WHERE marks >= 85;
 ```
-
-This copies the query's result into a new table, but does not
-automatically copy all constraints and indexes from the source.
+**Result:** a new table containing Ritik (85), Priya (92), and Neha (88). `CREATE TABLE AS` does not automatically copy all source constraints and indexes.
 
 Temporary table:
 
-``` sql
-CREATE TEMP TABLE temp_results (
-    id INTEGER,
-    result TEXT
+```sql
+CREATE TEMP TABLE work_list (id INTEGER, note TEXT);
+```
+**Result:** a temporary table available to the current session; normally removed when the session ends.
+
+## 6. Constraints and keys
+
+Constraints are rules enforced by the database.
+
+| Constraint | Meaning |
+|---|---|
+| `PRIMARY KEY` | unique and not null row identifier |
+| `FOREIGN KEY` | value must match a referenced key (subject to nullability/actions) |
+| `UNIQUE` | prevents duplicate key values |
+| `NOT NULL` | value is required |
+| `CHECK` | value must satisfy a condition |
+| `DEFAULT` | supplies a value when the column is omitted or `DEFAULT` is used |
+
+Examples:
+
+```sql
+CREATE TABLE departments (
+    department_id INTEGER PRIMARY KEY,
+    department_name TEXT NOT NULL UNIQUE
 );
 ```
+**Result:** empty `departments` table; department IDs are unique/non-null and names are required/unique.
 
-Temporary tables are session-scoped by default.
-
-# 6. Constraints and keys
-
-Constraints protect data integrity.
-
-## `PRIMARY KEY`
-
-Uniquely identifies each row and does not allow `NULL`. A table has one
-primary-key constraint, which may contain multiple columns.
-
-``` sql
-student_id INTEGER PRIMARY KEY
-```
-
-Composite key:
-
-``` sql
-PRIMARY KEY (student_id, course_id)
-```
-
-## `FOREIGN KEY`
-
-Requires a value to match a referenced key (subject to the chosen
-delete/update action).
-
-``` sql
-CREATE TABLE courses (
-    course_id INTEGER PRIMARY KEY,
-    course_name TEXT NOT NULL
-);
-
+```sql
 CREATE TABLE enrollments (
-    student_id INTEGER REFERENCES students(student_id),
-    course_id INTEGER REFERENCES courses(course_id),
-    enrolled_at DATE DEFAULT CURRENT_DATE,
-    PRIMARY KEY (student_id, course_id)
+    student_id INTEGER REFERENCES students(student_id) ON DELETE CASCADE,
+    department_id INTEGER REFERENCES departments(department_id),
+    enrolled_on DATE DEFAULT CURRENT_DATE,
+    PRIMARY KEY (student_id, department_id)
 );
 ```
+**Result:** empty table. The pair `(student_id, department_id)` must be unique; deleting a referenced student deletes their enrollment rows because of `ON DELETE CASCADE`.
 
-Common referential actions include `ON DELETE CASCADE`,
-`ON DELETE SET NULL`, `ON DELETE SET DEFAULT`, and `ON DELETE RESTRICT`
-/ `NO ACTION`. Use cascading behavior deliberately.
+Important details:
+- A **composite key** uses more than one column, e.g. `PRIMARY KEY (student_id, course_id)`.
+- A `UNIQUE` constraint allows multiple `NULL`s by default in PostgreSQL. PostgreSQL also supports `NULLS NOT DISTINCT` in supported versions.
+- A `CHECK` expression passes when it is true or unknown; add `NOT NULL` if null must be rejected.
+- A default is not applied when you explicitly insert `NULL`.
+- Prefer identity columns for new auto-generated numeric IDs:
 
-## `UNIQUE`
-
-Prevents duplicate non-null key values according to PostgreSQL's
-uniqueness rules. By default, multiple `NULL` values are allowed in a
-unique constraint; PostgreSQL also supports `NULLS NOT DISTINCT` in
-supported versions.
-
-``` sql
-email TEXT UNIQUE
-```
-
-## `NOT NULL`
-
-``` sql
-name TEXT NOT NULL
-```
-
-## `CHECK`
-
-``` sql
-marks INTEGER CHECK (marks >= 0 AND marks <= 100)
-```
-
-A `CHECK` constraint passes when its expression is true or unknown;
-combine it with `NOT NULL` when nulls must be prohibited.
-
-## `DEFAULT`
-
-``` sql
-created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-```
-
-A default is used when a column is omitted or `DEFAULT` is specified,
-not when an explicit `NULL` is inserted.
-
-## Identity columns
-
-``` sql
+```sql
 CREATE TABLE products (
     product_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_name TEXT NOT NULL
 );
 ```
+**Result:** an empty table; PostgreSQL generates `product_id` values on inserts. `GENERATED BY DEFAULT AS IDENTITY` is more permissive about explicit IDs.
 
-`GENERATED BY DEFAULT AS IDENTITY` allows an explicit value to be
-supplied more readily; `GENERATED ALWAYS` is stricter unless an override
-is specified.
+## 7. CRUD — INSERT, SELECT, UPDATE, DELETE
 
-# 7. CRUD: INSERT, SELECT, UPDATE, DELETE
+CRUD = Create, Read, Update, Delete.
 
-CRUD means Create, Read, Update, Delete.
+### INSERT
 
-## INSERT
-
-``` sql
+```sql
 INSERT INTO students (student_id, name, age, city, marks)
-VALUES (4, 'Neha', 20, 'Pune', 88);
+VALUES (6, 'Isha', 20, 'Pune', 81);
 ```
+**Result:** `INSERT 0 1`; one row is added.
+
+Insert multiple rows with one `VALUES` list; list columns explicitly so the value order is clear.
 
 Insert from another query:
 
-``` sql
+```sql
 INSERT INTO high_scorers (student_id, name, marks)
 SELECT student_id, name, marks
 FROM students
 WHERE marks >= 85;
 ```
+**Result:** copies qualifying rows into `high_scorers`; `INSERT 0 n` reports the number inserted. Running it repeatedly may cause duplicates unless a key/constraint prevents them.
 
-Return inserted/changed rows:
+### SELECT
 
-``` sql
-INSERT INTO students (student_id, name, age, marks)
-VALUES (5, 'Karan', 19, 67)
-RETURNING *;
+```sql
+SELECT name, marks FROM students;
 ```
+**Result:** five rows with only the `name` and `marks` columns.
 
-## SELECT columns
-
-``` sql
-SELECT name, marks
-FROM students;
+```sql
+SELECT * FROM students;
 ```
+**Result:** all columns and rows. Prefer explicit columns when the exact output matters.
 
-All columns:
+Aliases rename output columns or table references:
 
-``` sql
-SELECT *
-FROM students;
-```
-
-For learning and production code, prefer listing columns instead of `*`
-when the exact output matters.
-
-Aliases:
-
-``` sql
+```sql
 SELECT name AS student_name, marks AS score
 FROM students AS s;
 ```
+**Result:** the same five rows, with output headings `student_name` and `score`.
 
-## UPDATE
+### UPDATE
 
-``` sql
+```sql
 UPDATE students
 SET marks = 90
 WHERE student_id = 1
 RETURNING *;
 ```
+**Result:** the updated Ritik row is returned with `marks = 90`; command status `UPDATE 1`.
 
-Update multiple columns:
+Update more than one column:
 
-``` sql
+```sql
 UPDATE students
-SET city = 'Pune', marks = 91
+SET city = 'Pune', marks = 80
 WHERE student_id = 2;
 ```
+**Result:** Aman is now in Pune with 80 marks; `UPDATE 1`.
 
-Update using another table/query:
+**Safety:** run a matching `SELECT` with the same `WHERE` condition before a large update.
 
-``` sql
-UPDATE students AS s
-SET marks = s.marks + 5
-WHERE s.city = 'Delhi';
-```
+### DELETE
 
-## DELETE
-
-``` sql
+```sql
 DELETE FROM students
-WHERE student_id = 5
+WHERE student_id = 6
 RETURNING *;
 ```
+**Result:** the deleted Isha row is returned; `DELETE 1`.
 
-Delete all rows (be careful):
-
-``` sql
+```sql
 DELETE FROM students;
 ```
+**Result:** every row is removed, but the table remains. Never omit `WHERE` accidentally.
 
-`DELETE` can use a `WHERE` clause and returns deleted rows with
-`RETURNING`.
+### UPSERT — `ON CONFLICT`
 
-## UPSERT: `ON CONFLICT`
+Insert a row, or update it if its key already exists:
 
-``` sql
-INSERT INTO students (student_id, name, age, marks)
-VALUES (1, 'Ritik', 20, 90)
+```sql
+INSERT INTO students (student_id, name, age, city, marks)
+VALUES (1, 'Ritik', 20, 'Jaipur', 90)
 ON CONFLICT (student_id)
 DO UPDATE SET marks = EXCLUDED.marks
 RETURNING *;
 ```
+**Result:** student 1 is returned with marks 90. `EXCLUDED` means the proposed insert row that caused the conflict.
 
-`EXCLUDED` refers to the proposed row that conflicted with an existing
-unique/primary-key row.
+## 8. Filtering rows with WHERE
 
-Do not confuse this with MySQL's `ON DUPLICATE KEY UPDATE`; the syntax
-differs.
+`WHERE` keeps only rows whose condition is true.
 
-# 8. Filtering with WHERE
+### Comparison operators
 
-Comparison operators:
+`=` equal · `<>` or `!=` not equal · `>` greater · `<` less · `>=` greater/equal · `<=` less/equal.
 
--   `=` equal
--   `<>` or `!=` not equal
--   `>` greater than
--   `<` less than
--   `>=` greater than or equal
--   `<=` less than or equal
-
-Examples:
-
-``` sql
-SELECT * FROM students WHERE marks >= 80;
-SELECT * FROM students WHERE city <> 'Delhi';
-SELECT * FROM students WHERE age = 20;
+```sql
+SELECT name FROM students WHERE marks >= 80;
 ```
+**Result:** Ritik, Priya, Neha.
 
-## Logical operators
+```sql
+SELECT name FROM students WHERE city <> 'Delhi';
+```
+**Result:** Ritik and Priya. Karan's `NULL` city is not returned because a comparison with `NULL` is unknown.
 
-``` sql
-SELECT *
-FROM students
-WHERE marks >= 80 AND city = 'Jaipur';
+### Logical operators
 
-SELECT *
-FROM students
+- `AND`: both conditions must be true.
+- `OR`: at least one must be true.
+- `NOT`: reverses true/false (unknown remains unknown).
+
+```sql
+SELECT name FROM students
+WHERE city = 'Delhi' AND marks >= 80;
+```
+**Result:** Neha.
+
+```sql
+SELECT name FROM students
 WHERE city = 'Delhi' OR city = 'Mumbai';
-
-SELECT *
-FROM students
-WHERE NOT city = 'Delhi';
 ```
+**Result:** Aman, Priya, Neha.
 
-Use parentheses when mixing `AND` and `OR`:
+Use parentheses when mixing `AND` and `OR`. `AND` is evaluated before `OR`.
 
-``` sql
-SELECT *
-FROM students
-WHERE city = 'Delhi'
-  AND (marks >= 80 OR age < 20);
-```
-
-`AND` has higher precedence than `OR`. Parentheses make intent explicit.
-
-## BETWEEN
+### BETWEEN
 
 Inclusive at both ends:
 
-``` sql
+```sql
+SELECT name FROM students WHERE marks BETWEEN 70 AND 90;
+```
+**Result:** Ritik, Aman, Neha. Equivalent to `marks >= 70 AND marks <= 90`.
+
+### IN and NOT IN
+
+```sql
+SELECT name FROM students WHERE city IN ('Delhi', 'Jaipur');
+```
+**Result:** Ritik, Aman, Neha.
+
+```sql
+SELECT name FROM students WHERE city NOT IN ('Delhi', 'Jaipur');
+```
+**Result:** Priya. `NULL` city is not included.
+
+**Important:** if a `NOT IN` subquery returns even one `NULL`, the comparison can become unknown and unexpectedly return no rows. `NOT EXISTS` is often safer for checking that no matching row exists.
+
+### DISTINCT
+
+```sql
+SELECT DISTINCT city FROM students ORDER BY city;
+```
+**Result:** `Delhi`, `Jaipur`, `Mumbai`, `NULL` — each distinct city value appears once.
+
+```sql
+SELECT DISTINCT city, age FROM students;
+```
+**Result:** unique `(city, age)` combinations, not unique cities alone.
+
+## 9. LIKE and ILIKE — simple wildcard matching
+
+`LIKE` searches using two wildcard symbols:
+- `%` = zero or more characters.
+- `_` = exactly one character.
+- `ILIKE` is PostgreSQL's case-insensitive version.
+
+```sql
+SELECT name FROM students WHERE name LIKE 'R%';
+```
+**Result:** Ritik — names beginning with uppercase R.
+
+```sql
+SELECT name FROM students WHERE name LIKE '%a';
+```
+**Result:** Neha — names ending in lowercase `a` (case-sensitive).
+
+```sql
+SELECT name FROM students WHERE name ILIKE 'r%';
+```
+**Result:** Ritik — case-insensitive prefix match.
+
+```sql
+SELECT name FROM students WHERE name LIKE '_a%';
+```
+**Result:** Karan — second character is `a`.
+
+`LIKE` is **not** regular-expression matching. Use Regex when the rule needs character classes, repetition rules, or exact start/end constraints.
+
+## 10. Regular expressions (Regex) in PostgreSQL
+
+A **regular expression** is a pattern that describes what text should look like. It is useful for validation, searching, and replacing text.
+
+### PostgreSQL regex operators
+
+| Operator | Meaning |
+|---|---|
+| `~` | matches regex; case-sensitive |
+| `~*` | matches regex; case-insensitive |
+| `!~` | does not match regex |
+| `!~*` | does not match regex; case-insensitive |
+
+```sql
+SELECT 'ritik@gmail.com' ~ 'gmail';
+```
+**Result:** `TRUE`.
+
+```sql
+SELECT 'RITIK@gmail.com' ~ 'ritik';
+```
+**Result:** `FALSE`, because `~` is case-sensitive.
+
+```sql
+SELECT 'RITIK@gmail.com' ~* 'ritik';
+```
+**Result:** `TRUE`, because `~*` ignores letter case.
+
+### Regex symbols you should know
+
+| Symbol/pattern | Meaning | Example |
+|---|---|---|
+| `^` | start of string | `^A` matches `Apple`, not `Cat` |
+| `$` | end of string | `com$` matches `mail.com` |
+| `[ABC]` | one character: A or B or C | `[ABC]at` |
+| `[A-Z]` | one uppercase English letter | `R` |
+| `[a-z]` | one lowercase English letter | `i` |
+| `[A-Za-z]` | one English letter | `R` or `i` |
+| `[0-9]` | one digit | `7` |
+| `[A-Za-z0-9]` | one letter or digit | `R`, `i`, or `7` |
+| `*` | zero or more of previous item | `A*` |
+| `+` | one or more of previous item | `A+` |
+| `?` | zero or one of previous item | `colou?r` |
+| `{2}` | exactly two repetitions | `[0-9]{2}` |
+| `{2,4}` | two to four repetitions | `[0-9]{2,4}` |
+| `.` | any one character | `a.b` matches `a1b` |
+| `[.]` | a literal dot | `mail[.]com` |
+| `\|` | alternation (OR) | `cat\|dog` |
+| `( )` | groups part of a pattern | `(ab)+` |
+| `[^0-9]` | one character that is not a digit | `[^0-9]` |
+
+**Remember:** `*`, `+`, and `?` apply to the item immediately before them. `A*` can match zero A characters; `A+` requires at least one A.
+
+### Small regex examples
+
+```sql
+SELECT 'Apple' ~ '^A';       -- TRUE: starts with A
+SELECT 'Banana' ~ '^A';     -- FALSE: does not start with A
+SELECT 'file.com' ~ 'com$'; -- TRUE: ends with com
+SELECT 'A7B' ~ '^A.B$';     -- TRUE: A, any one character, B
+SELECT 'AB' ~ '^A.B$';      -- FALSE: the middle character is missing
+SELECT 'a12b' ~ '[0-9]+';   -- TRUE: contains one or more digits
+```
+
+### Regex vs LIKE
+
+| Need | Use |
+|---|---|
+| Starts with `R` | `LIKE 'R%'` |
+| Contains `abc` | `LIKE '%abc%'` |
+| Exactly one character at a position | `LIKE '_'` or regex |
+| First character must be a letter, then only certain characters | Regex |
+| Must end in a precise pattern | Regex with `$` |
+
+### LeetCode 1517 — valid email pattern
+
+Requirements:
+1. First character must be an English letter.
+2. Remaining name characters may be letters, digits, `_`, `.`, or `-`.
+3. Domain must be exactly `@leetcode.com`.
+4. Match the entire email, not just a substring.
+
+```sql
 SELECT *
-FROM students
-WHERE marks BETWEEN 70 AND 90;
+FROM Users
+WHERE mail ~ '^[A-Za-z][A-Za-z0-9._-]*@leetcode[.]com$';
 ```
-
-Equivalent to `marks >= 70 AND marks <= 90`.
-
-## IN / NOT IN
-
-``` sql
-SELECT *
-FROM students
-WHERE city IN ('Delhi', 'Jaipur');
-
-SELECT *
-FROM students
-WHERE city NOT IN ('Delhi', 'Jaipur');
-```
-
-Caution: `NOT IN` can behave unexpectedly if its list/subquery contains
-`NULL`. `NOT EXISTS` is often safer for anti-join logic.
-
-## LIKE / ILIKE
-
-`LIKE` is pattern matching; `ILIKE` is PostgreSQL's case-insensitive
-form.
-
--   `%`: zero or more characters
--   `_`: exactly one character
-
-``` sql
-SELECT * FROM students WHERE name LIKE 'R%';       -- starts with R
-SELECT * FROM students WHERE name LIKE '%a';       -- ends with a
-SELECT * FROM students WHERE name LIKE '%it%';     -- contains it
-SELECT * FROM students WHERE name ILIKE 'r%';      -- case-insensitive
-SELECT * FROM students WHERE name LIKE '_a%';      -- second character is a
-```
-
-`LIKE` is not a regular expression. PostgreSQL also supports regex
-operators such as `~` and case-insensitive `~*`.
-
-## DISTINCT
-
-``` sql
-SELECT DISTINCT city
-FROM students;
-
-SELECT DISTINCT city, age
-FROM students;
-```
-
-The second query returns unique *combinations* of city and age.
-
-# 9. Sorting, LIMIT, OFFSET, and pagination
-
-``` sql
-SELECT *
-FROM students
-ORDER BY marks DESC, name ASC
-LIMIT 10;
-```
-
-Multiple sort keys are applied left to right. If ties matter, add a
-stable tie-breaker such as a primary key.
-
-Pagination:
-
-``` sql
-SELECT *
-FROM students
-ORDER BY student_id
-LIMIT 10 OFFSET 20;
-```
-
-This skips 20 rows and returns up to 10. Large offsets can be
-inefficient. For large datasets, keyset pagination is often better:
-
-``` sql
-SELECT *
-FROM students
-WHERE student_id > 100
-ORDER BY student_id
-LIMIT 10;
-```
-
-`NULLS FIRST` and `NULLS LAST` control where nulls appear in sort order:
-
-``` sql
-SELECT *
-FROM students
-ORDER BY marks DESC NULLS LAST;
-```
-
-PostgreSQL defaults to nulls last for ascending order and nulls first
-for descending order.
-
-# 10. NULL handling
-
-`NULL` means missing, unknown, or not applicable; it is not zero and is
-not an empty string.
-
-Incorrect:
-
-``` sql
-WHERE city = NULL
-```
-
-Correct:
-
-``` sql
-SELECT * FROM students WHERE city IS NULL;
-SELECT * FROM students WHERE city IS NOT NULL;
-```
-
-## COALESCE
-
-Returns the first non-null argument:
-
-``` sql
-SELECT name, COALESCE(city, 'Unknown') AS city
-FROM students;
-```
-
-## NULLIF
-
-Returns `NULL` if its two arguments are equal:
-
-``` sql
-SELECT total / NULLIF(count, 0)
-FROM summary;
-```
-
-This avoids division by zero when `count = 0` (provided the resulting
-expression's types are appropriate).
-
-## Three-valued logic
-
-Comparisons involving `NULL` usually produce `UNKNOWN`, not true or
-false. `WHERE` keeps only rows where the condition is true.
-
-For example:
-
-``` sql
-SELECT *
-FROM students
-WHERE marks <> 90;
-```
-
-Rows with `marks IS NULL` do not pass this condition. To include nulls:
-
-``` sql
-WHERE marks <> 90 OR marks IS NULL
-```
-
-## Null-safe comparison
-
-PostgreSQL supports:
-
-``` sql
-a IS DISTINCT FROM b
-a IS NOT DISTINCT FROM b
-```
-
-These treat nulls as comparable values and are useful for reliable
-equality/inequality checks.
-
-# 11. Expressions, operators, and CASE
-
-Arithmetic operators include `+`, `-`, `*`, `/`, and `%` (remainder).
-Integer division truncates fractional parts when both operands are
-integers; cast to a decimal type if you need a fractional result.
-
-``` sql
-SELECT 5 / 2;                 -- integer result
-SELECT 5::NUMERIC / 2;        -- decimal result
-SELECT marks + 5 AS adjusted_marks
-FROM students;
-```
-
-Concatenate strings with `||`:
-
-``` sql
-SELECT name || ' - ' || city AS student_info
-FROM students;
-```
-
-## CASE
-
-SQL's conditional expression:
-
-``` sql
-SELECT name, marks,
-       CASE
-           WHEN marks >= 90 THEN 'Excellent'
-           WHEN marks >= 75 THEN 'Good'
-           WHEN marks >= 60 THEN 'Average'
-           ELSE 'Needs improvement'
-       END AS grade
-FROM students;
-```
-
-Simple CASE:
-
-``` sql
-SELECT name,
-       CASE city
-           WHEN 'Delhi' THEN 'North'
-           WHEN 'Mumbai' THEN 'West'
-           ELSE 'Other'
-       END AS region
-FROM students;
-```
-
-`CASE` is an expression, so it can appear in `SELECT`, `ORDER BY`,
-aggregates, and many other contexts.
-
-# 12. String functions
-
-Frequently used PostgreSQL string functions:
-
-``` sql
-SELECT LENGTH('PostgreSQL');               -- character length
-SELECT LOWER('HELLO'), UPPER('hello');
-SELECT TRIM('  hello  ');
-SELECT LTRIM('  hello'), RTRIM('hello  ');
-SELECT SUBSTRING('PostgreSQL' FROM 1 FOR 4);
-SELECT LEFT('PostgreSQL', 4), RIGHT('PostgreSQL', 3);
-SELECT REPLACE('banana', 'a', 'o');
-SELECT POSITION('SQL' IN 'PostgreSQL');
-SELECT CONCAT('Hello', ' ', 'World');
-SELECT 'Hello' || ' ' || 'World';
-SELECT SPLIT_PART('a,b,c', ',', 2);         -- b
-SELECT REPEAT('ha', 3);
-SELECT REVERSE('abc');
-```
-
-Padding:
-
-``` sql
-SELECT LPAD('42', 5, '0');                  -- 00042
-SELECT RPAD('SQL', 5, '.');                 -- SQL..
-```
-
-Regex replacement:
-
-``` sql
-SELECT REGEXP_REPLACE('a12b34', '[0-9]+', '#', 'g');
-```
-
-The `g` flag replaces all matches. Be aware of case sensitivity and
-whether a function counts characters or bytes.
-
-# 13. Numeric and mathematical functions
-
-``` sql
-SELECT ABS(-10);
-SELECT ROUND(12.345, 2);
-SELECT CEIL(4.2);
-SELECT FLOOR(4.8);
-SELECT POWER(2, 3);
-SELECT SQRT(25);
-SELECT MOD(10, 3);
-SELECT GREATEST(2, 9, 4);
-SELECT LEAST(2, 9, 4);
-```
-
-Random values:
-
-``` sql
-SELECT RANDOM();  -- approximate value in [0, 1)
-```
-
-For division and averages, consider type behavior and zero denominators.
-
-# 14. Dates and times
-
-Useful current values:
-
-``` sql
-SELECT CURRENT_DATE;
-SELECT CURRENT_TIME;
-SELECT CURRENT_TIMESTAMP;
-SELECT NOW();
-```
-
-Date arithmetic:
-
-``` sql
-SELECT CURRENT_DATE + 7;                         -- seven days later
-SELECT CURRENT_DATE - DATE '2026-01-01';         -- integer number of days
-SELECT NOW() + INTERVAL '3 days';
-SELECT NOW() - INTERVAL '2 hours';
-```
-
-Extract parts:
-
-``` sql
-SELECT EXTRACT(YEAR FROM DATE '2026-10-16');
-SELECT EXTRACT(MONTH FROM CURRENT_DATE);
-SELECT EXTRACT(DOW FROM CURRENT_DATE);           -- Sunday=0
-SELECT DATE_TRUNC('month', CURRENT_TIMESTAMP);
-```
-
-Formatting:
-
-``` sql
-SELECT TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD');
-SELECT TO_CHAR(CURRENT_TIMESTAMP, 'DD Mon YYYY HH24:MI');
-```
-
-Parsing:
-
-``` sql
-SELECT TO_DATE('16-10-2026', 'DD-MM-YYYY');
-SELECT TO_TIMESTAMP('2026-10-16 14:30', 'YYYY-MM-DD HH24:MI');
-```
-
-Date filters should often use half-open ranges for timestamps:
-
-``` sql
-WHERE created_at >= TIMESTAMP '2026-10-01 00:00:00'
-  AND created_at <  TIMESTAMP '2026-11-01 00:00:00'
-```
-
-This avoids missing fractional seconds at the end of a day/month. For
-`TIMESTAMPTZ`, use time-zone-aware boundaries when the intended time
-zone matters.
-
-# 15. Aggregate functions, GROUP BY, HAVING
-
-Aggregates summarize multiple rows.
-
--   `COUNT(*)`: counts rows.
--   `COUNT(column)`: counts non-null values in that column.
--   `COUNT(DISTINCT column)`: counts distinct non-null values.
--   `SUM(column)`: sum of non-null values.
--   `AVG(column)`: average of non-null values.
--   `MIN(column)`, `MAX(column)`: minimum and maximum.
--   `STRING_AGG(value, delimiter)`: concatenate values across rows.
--   `ARRAY_AGG(value)`: collect values into an array.
+**Result:** only rows whose email follows all four rules.
+
+Pattern breakdown:
+
+| Part | Meaning |
+|---|---|
+| `^` | beginning of email |
+| `[A-Za-z]` | first character is a letter |
+| `[A-Za-z0-9._-]*` | zero or more allowed remaining name characters |
+| `@leetcode` | exact domain prefix |
+| `[.]com` | literal dot followed by `com` |
+| `$` | end of email |
 
 Examples:
 
-``` sql
-SELECT COUNT(*) FROM students;
-SELECT AVG(marks) FROM students;
-SELECT MIN(marks), MAX(marks), SUM(marks) FROM students;
-SELECT COUNT(DISTINCT city) FROM students;
+| Email | Valid? | Reason |
+|---|---|---|
+| `ritik@leetcode.com` | Yes | starts with a letter; correct domain |
+| `ritik123@leetcode.com` | Yes | digits allowed after first letter |
+| `ritik.rana@leetcode.com` | Yes | dot allowed in name |
+| `ritik_rana@leetcode.com` | Yes | underscore allowed |
+| `123ritik@leetcode.com` | No | starts with a digit |
+| `ritik@gmail.com` | No | wrong domain |
+| `ritik@leetcode.in` | No | wrong ending |
+
+**Tip:** `^` and `$` are essential for whole-string validation. Without them, a matching part somewhere inside a longer string may be enough.
+
+### Regex functions
+
+```sql
+SELECT REGEXP_REPLACE('a12b34', '[0-9]+', '#', 'g');
 ```
+**Result:** `a#b#`. The `g` flag replaces every match, not just the first.
 
-## GROUP BY
+```sql
+SELECT REGEXP_MATCH('ritik123', '[0-9]+');
+```
+**Result:** `{123}` — the matched digit substring as an array.
 
-One output row per group:
+## 11. String functions
 
-``` sql
+| Function | Purpose | Example result |
+|---|---|---|
+| `LENGTH('SQL')` | character length | `3` |
+| `LOWER('HELLO')` | lowercase | `hello` |
+| `UPPER('hello')` | uppercase | `HELLO` |
+| `INITCAP('hello world')` | capitalise word starts | `Hello World` |
+| `TRIM('  hi  ')` | remove outer spaces | `hi` |
+| `LEFT('Postgres',4)` | first 4 characters | `Post` |
+| `RIGHT('Postgres',3)` | last 3 characters | `res` |
+| `SUBSTRING('Postgres' FROM 1 FOR 4)` | part of string | `Post` |
+| `REPLACE('banana','a','o')` | replace text | `bonono` |
+| `POSITION('SQL' IN 'PostgreSQL')` | position (1-based) | `8` |
+| `CONCAT('A','B')` | concatenate | `AB` |
+| `'A' \|\| 'B'` | concatenate | `AB` |
+| `SPLIT_PART('a,b,c', ',', 2)` | split and get part | `b` |
+| `REPEAT('ha',3)` | repeat text | `hahaha` |
+| `REVERSE('abc')` | reverse text | `cba` |
+| `LPAD('42',5,'0')` | pad on left | `00042` |
+| `RPAD('SQL',5,'.')` | pad on right | `SQL..` |
+
+Examples:
+
+```sql
+SELECT UPPER('ritik'), LOWER('SQL'), INITCAP('hello world');
+```
+**Result:** `RITIK | sql | Hello World`.
+
+```sql
+SELECT CONCAT('Hello', ' ', 'World'), 'Hello' || ' ' || 'World';
+```
+**Result:** `Hello World | Hello World`.
+
+LeetCode 1667 (Fix Names):
+
+```sql
+SELECT user_id,
+       CONCAT(UPPER(LEFT(name, 1)), LOWER(SUBSTRING(name FROM 2))) AS name
+FROM Users
+ORDER BY user_id;
+```
+**Result:** each name has its first letter uppercase and all remaining letters lowercase, ordered by `user_id`.
+
+## 12. Numeric functions and arithmetic
+
+| Function | Meaning | Example result |
+|---|---|---:|
+| `ABS(-10)` | absolute value | 10 |
+| `ROUND(12.345,2)` | round to 2 decimal places | 12.35 |
+| `CEIL(4.2)` / `CEILING(4.2)` | round upward | 5 |
+| `FLOOR(4.8)` | round downward | 4 |
+| `POWER(2,3)` | exponent | 8 |
+| `SQRT(25)` | square root | 5 |
+| `MOD(10,3)` or `10 % 3` | remainder | 1 |
+| `GREATEST(2,9,4)` | largest argument | 9 |
+| `LEAST(2,9,4)` | smallest argument | 2 |
+
+```sql
+SELECT ROUND(12.345::NUMERIC, 2);
+```
+**Result:** `12.35`.
+
+PostgreSQL detail: the two-argument `ROUND(value, decimal_places)` form expects `NUMERIC`. If a value is `DOUBLE PRECISION`, cast it: `ROUND(value::NUMERIC, 2)`.
+
+**Integer division:** `5 / 2` gives `2`. Use `5::NUMERIC / 2` or `5.0 / 2` to keep the fractional part.
+
+```sql
+SELECT 5 / 2, 5::NUMERIC / 2;
+```
+**Result:** `2 | 2.5000000000000000`.
+
+For percentages, multiply by `100.0` or cast to numeric before division. Use `NULLIF(denominator, 0)` to avoid division by zero.
+
+## 13. Dates and times
+
+### Common values and functions
+
+```sql
+SELECT CURRENT_DATE;
+```
+**Result:** today's date, e.g. `2026-11-20`.
+
+```sql
+SELECT CURRENT_TIMESTAMP, NOW();
+```
+**Result:** the current transaction timestamp (same value for both in a transaction), displayed in the session time zone.
+
+### Date arithmetic
+
+```sql
+SELECT DATE '2026-02-01' + 7;
+```
+**Result:** `2026-02-08`.
+
+```sql
+SELECT DATE '2026-02-01' + INTERVAL '1 day';
+```
+**Result:** `2026-02-02 00:00:00`.
+
+```sql
+SELECT DATE '2026-02-01' - DATE '2026-01-01';
+```
+**Result:** `31` days.
+
+Useful intervals: `INTERVAL '1 day'`, `INTERVAL '7 days'`, `INTERVAL '2 hours'`, `INTERVAL '1 month'`.
+
+### Extracting and formatting
+
+```sql
+SELECT EXTRACT(YEAR FROM DATE '2026-11-20'),
+       EXTRACT(MONTH FROM DATE '2026-11-20'),
+       EXTRACT(DOW FROM DATE '2026-11-20');
+```
+**Result:** `2026 | 11 | 5` (DOW: Sunday 0 through Saturday 6).
+
+```sql
+SELECT TO_CHAR(DATE '2026-02-05', 'YYYY-MM');
+```
+**Result:** `2026-02` (text).
+
+```sql
+SELECT DATE_TRUNC('month', TIMESTAMP '2026-02-17 13:45:00');
+```
+**Result:** `2026-02-01 00:00:00`.
+
+- `TO_CHAR` formats a date/time as text.
+- `DATE_TRUNC` returns a date/time truncated to a unit.
+- `TO_DATE(text, format)` parses text into a date.
+- `TO_TIMESTAMP(text, format)` parses text into a timestamp.
+
+### Date filtering
+
+For a `DATE` column:
+
+```sql
+WHERE order_date BETWEEN DATE '2026-02-01' AND DATE '2026-02-28'
+```
+**Result:** rows dated from February 1 through February 28 inclusive.
+
+For a timestamp column, use a half-open range:
+
+```sql
+WHERE created_at >= TIMESTAMP '2026-02-01 00:00:00'
+  AND created_at <  TIMESTAMP '2026-03-01 00:00:00'
+```
+**Result:** every timestamp in February, including fractional seconds on February 28. For `TIMESTAMPTZ`, choose boundaries with the intended time zone.
+
+**Important:** `TO_CHAR(date, 'YYYY-MM')` is useful for month labels/grouping; use date boundaries in `WHERE` when filtering actual dates.
+
+## 14. Aggregate functions, GROUP BY, HAVING
+
+Aggregate functions combine multiple rows into a summary.
+
+| Function | Meaning |
+|---|---|
+| `COUNT(*)` | count all rows |
+| `COUNT(column)` | count non-NULL values in column |
+| `COUNT(DISTINCT column)` | count unique non-NULL values |
+| `SUM(column)` | sum non-NULL values |
+| `AVG(column)` | average non-NULL values |
+| `MIN(column)` / `MAX(column)` | smallest/largest value |
+| `STRING_AGG(value, delimiter)` | combine text values |
+| `ARRAY_AGG(value)` | collect values into an array |
+
+Using the sample `students` table:
+
+```sql
+SELECT COUNT(*), COUNT(city), COUNT(DISTINCT city), AVG(marks)
+FROM students;
+```
+**Result:** `5 | 4 | 3 | 81.6`.
+
+Why? Five rows; four non-null cities; three unique non-null cities; average marks = `(85+76+92+88+67)/5 = 81.6`.
+
+### GROUP BY
+
+Creates one result row per group:
+
+```sql
 SELECT city, COUNT(*) AS student_count
 FROM students
-GROUP BY city;
+GROUP BY city
+ORDER BY city NULLS LAST;
 ```
 
-Average marks by city:
+**Result:**
 
-``` sql
-SELECT city, AVG(marks) AS average_marks
-FROM students
-GROUP BY city;
-```
+| city | student_count |
+|---|---:|
+| Delhi | 2 |
+| Jaipur | 1 |
+| Mumbai | 1 |
+| NULL | 1 |
 
-Any selected column that is not aggregated generally needs to be
-included in `GROUP BY`, subject to PostgreSQL's functional-dependency
-rules.
+Every selected column that is not aggregated generally belongs in `GROUP BY` (subject to PostgreSQL functional-dependency rules).
 
-## HAVING
+### HAVING
 
-Filters groups after aggregation:
+- `WHERE` filters individual rows **before** grouping.
+- `HAVING` filters groups **after** aggregation.
 
-``` sql
+```sql
 SELECT city, COUNT(*) AS student_count
 FROM students
 GROUP BY city
 HAVING COUNT(*) >= 2;
 ```
+**Result:** `Delhi | 2`.
 
-Difference:
+### Conditional aggregation
 
--   `WHERE` filters input rows before grouping.
--   `HAVING` filters groups after grouping.
+Count rows matching a condition without removing other rows:
 
-Combine them:
+```sql
+SELECT COUNT(*) AS total,
+       COUNT(*) FILTER (WHERE marks >= 80) AS high_scorers
+FROM students;
+```
+**Result:** `5 | 3`.
 
-``` sql
-SELECT city, AVG(marks) AS avg_marks
+Equivalent using `CASE`:
+
+```sql
+SELECT SUM(CASE WHEN marks >= 80 THEN 1 ELSE 0 END) AS high_scorers
+FROM students;
+```
+**Result:** `3`.
+
+`FILTER` is PostgreSQL's concise aggregate condition syntax. `SUM(...) FILTER (...)` returns `NULL` if no rows match; use `COALESCE` if you need zero.
+
+### Percentages
+
+```sql
+SELECT ROUND(
+    100.0 * COUNT(*) FILTER (WHERE marks >= 40) / NULLIF(COUNT(*), 0),
+    2
+) AS pass_percentage
+FROM students;
+```
+**Result:** `100.00` for the sample data. If the table is empty, the result is `NULL` rather than a divide-by-zero error.
+
+### Ordered string aggregation
+
+```sql
+SELECT city, STRING_AGG(name, ', ' ORDER BY name) AS students
 FROM students
-WHERE marks IS NOT NULL
+WHERE city IS NOT NULL
 GROUP BY city
-HAVING AVG(marks) >= 80;
+ORDER BY city;
 ```
+**Result:** Delhi → `Aman, Neha`; Jaipur → `Ritik`; Mumbai → `Priya`.
 
-## Conditional aggregation
+For unique product names per date (LeetCode 1484):
 
-``` sql
-SELECT
-    COUNT(*) AS total_students,
-    COUNT(*) FILTER (WHERE marks >= 80) AS high_scorers,
-    AVG(marks) FILTER (WHERE city = 'Delhi') AS delhi_average
-FROM students;
+```sql
+SELECT sell_date,
+       COUNT(DISTINCT product) AS num_sold,
+       STRING_AGG(DISTINCT product, ',' ORDER BY product) AS products
+FROM Activities
+GROUP BY sell_date
+ORDER BY sell_date;
 ```
+**Result:** one row per date; count of unique products and their alphabetically sorted names joined by commas.
 
-Equivalent style using `CASE`:
+## 15. Joins
 
-``` sql
-SELECT
-    SUM(CASE WHEN marks >= 80 THEN 1 ELSE 0 END) AS high_scorers
-FROM students;
-```
+A join combines related rows from tables. Assume:
 
-PostgreSQL's aggregate `FILTER` clause is particularly convenient.
+**departments**
 
-## Ordered aggregates
+| department_id | department_name |
+|---:|---|
+| 10 | Engineering |
+| 20 | Sales |
+| 30 | HR |
 
-``` sql
-SELECT city,
-       STRING_AGG(name, ', ' ORDER BY name) AS students
-FROM students
-GROUP BY city;
-```
+**employees**
 
-The order inside `STRING_AGG` determines concatenation order.
+| employee_id | employee_name | department_id | salary |
+|---:|---|---:|---:|
+| 1 | Asha | 10 | 70000 |
+| 2 | Ben | 10 | 60000 |
+| 3 | Cara | 20 | 50000 |
+| 4 | Dev | NULL | 40000 |
 
-# 16. Joins
+### INNER JOIN
 
-Assume these tables:
+Only rows that match on both sides:
 
-``` sql
-CREATE TABLE departments (
-    department_id INTEGER PRIMARY KEY,
-    department_name TEXT NOT NULL
-);
-
-CREATE TABLE employees (
-    employee_id INTEGER PRIMARY KEY,
-    employee_name TEXT NOT NULL,
-    department_id INTEGER REFERENCES departments(department_id),
-    salary NUMERIC(10, 2)
-);
-```
-
-## INNER JOIN
-
-Only matching rows:
-
-``` sql
+```sql
 SELECT e.employee_name, d.department_name
-FROM employees AS e
-INNER JOIN departments AS d
-    ON e.department_id = d.department_id;
+FROM employees e
+JOIN departments d ON e.department_id = d.department_id;
 ```
+**Result:** Asha–Engineering, Ben–Engineering, Cara–Sales. Dev is omitted because there is no matching department.
 
-`JOIN` by itself means `INNER JOIN`.
+### LEFT JOIN
 
-## LEFT JOIN
+Keeps every row from the left table; unmatched right columns become `NULL`:
 
-All left-table rows, with matching right-side data where available;
-unmatched right-side columns become `NULL`.
-
-``` sql
+```sql
 SELECT e.employee_name, d.department_name
-FROM employees AS e
-LEFT JOIN departments AS d
-    ON e.department_id = d.department_id;
+FROM employees e
+LEFT JOIN departments d ON e.department_id = d.department_id;
 ```
+**Result:** Asha–Engineering, Ben–Engineering, Cara–Sales, Dev–NULL.
 
-Find employees without a matching department:
+### RIGHT JOIN
 
-``` sql
-SELECT e.*
-FROM employees AS e
-LEFT JOIN departments AS d
-    ON e.department_id = d.department_id
-WHERE d.department_id IS NULL;
-```
+Keeps every row from the right table. Often rewritten as a `LEFT JOIN` by reversing table order.
 
-## RIGHT JOIN
+### FULL OUTER JOIN
 
-Keeps all rows from the right table. It is often possible to rewrite a
-right join as a left join by reversing table order.
+Keeps matched rows and unmatched rows from both sides.
 
-## FULL OUTER JOIN
-
-Keeps matched rows and unmatched rows from both sides:
-
-``` sql
+```sql
 SELECT e.employee_name, d.department_name
-FROM employees AS e
-FULL OUTER JOIN departments AS d
-    ON e.department_id = d.department_id;
+FROM employees e
+FULL OUTER JOIN departments d ON e.department_id = d.department_id;
 ```
+**Result:** all four employees and all three departments; unmatched side is `NULL`. HR appears with no employee.
 
-## CROSS JOIN
+### CROSS JOIN
 
-Returns every combination of rows from both tables:
+Every combination of rows. If left has 4 rows and right has 3, result has 12 rows.
 
-``` sql
-SELECT *
-FROM employees
-CROSS JOIN departments;
+```sql
+SELECT e.employee_name, d.department_name
+FROM employees e CROSS JOIN departments d;
 ```
+**Result:** 12 employee/department combinations.
 
-If one table has 3 rows and the other has 4, the result has 12 rows.
+### SELF JOIN
 
-## SELF JOIN
+Join a table to itself, for example employee and manager:
 
-Join a table to itself, such as employees and their managers:
-
-``` sql
-SELECT e.employee_name AS employee,
-       m.employee_name AS manager
-FROM employees AS e
-LEFT JOIN employees AS m
-    ON e.manager_id = m.employee_id;
+```sql
+SELECT e.employee_name AS employee, m.employee_name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.employee_id;
 ```
+**Result:** each employee with their manager's name; `manager` is `NULL` for employees without a manager. This example assumes `manager_id` exists.
 
-This example requires a `manager_id` column in `employees`.
+### Important LEFT JOIN filter rule
 
-## Join conditions versus filters
+This removes unmatched rows:
 
-Be careful when filtering the right table of a left join.
-
-This can effectively remove unmatched rows:
-
-``` sql
+```sql
 SELECT *
 FROM employees e
 LEFT JOIN departments d ON e.department_id = d.department_id
 WHERE d.department_name = 'Engineering';
 ```
+**Result:** only Engineering employees; the `WHERE` condition removes null-extended rows.
 
-If you want to preserve every employee and match only Engineering
-departments, put the condition in `ON`:
+To keep every employee but match only Engineering departments, put the condition in `ON`:
 
-``` sql
+```sql
 SELECT *
 FROM employees e
 LEFT JOIN departments d
   ON e.department_id = d.department_id
  AND d.department_name = 'Engineering';
 ```
+**Result:** all employees; department details appear only for Engineering matches.
 
-## Joining more than two tables
+### Joining more than two tables
 
-``` sql
-SELECT s.name, c.course_name, e.enrolled_at
+```sql
+SELECT s.name, c.course_name
 FROM students s
 JOIN enrollments e ON e.student_id = s.student_id
 JOIN courses c ON c.course_id = e.course_id;
 ```
+**Result:** one row per matching student-course enrollment.
 
-Know the relationship cardinality: one-to-one, one-to-many, and
-many-to-many. A many-to-many relationship is commonly represented by a
-junction table such as `enrollments`.
+Know relationship types:
+- one-to-one,
+- one-to-many,
+- many-to-many (usually represented by a junction table such as `enrollments`).
 
-# 17. Subqueries
+## 16. Subqueries
 
-A subquery is a query nested inside another query.
+A subquery is a query inside another query.
 
-## Scalar subquery
+### Scalar subquery
 
-Returns one value:
+Returns one value (zero rows gives `NULL`; more than one row causes an error in scalar context):
 
-``` sql
+```sql
 SELECT name, marks
 FROM students
 WHERE marks > (SELECT AVG(marks) FROM students);
 ```
+**Result:** Priya and Neha (marks above 81.6).
 
-The inner query computes the average; the outer query selects students
-above it.
+### IN
 
-## `IN` with a subquery
+Checks whether a value appears in a returned list:
 
-``` sql
+```sql
 SELECT name
 FROM students
 WHERE student_id IN (
     SELECT student_id
     FROM enrollments
-    WHERE course_id = 10
+    WHERE department_id = 10
 );
 ```
+**Result:** names of students enrolled in department 10.
 
-## `EXISTS`
+### EXISTS and NOT EXISTS
 
-Checks whether at least one matching row exists:
+`EXISTS` is true if the subquery returns at least one row. `SELECT 1` is conventional because the selected value is irrelevant.
 
-``` sql
+```sql
 SELECT s.name
 FROM students s
 WHERE EXISTS (
-    SELECT 1
-    FROM enrollments e
+    SELECT 1 FROM enrollments e
     WHERE e.student_id = s.student_id
 );
 ```
+**Result:** students with at least one enrollment, each outer student appears once even if multiple enrollments exist.
 
-`SELECT 1` is conventional because only existence matters, not the
-selected value.
-
-## `NOT EXISTS`
-
-Find students with no enrollment:
-
-``` sql
+```sql
 SELECT s.name
 FROM students s
 WHERE NOT EXISTS (
-    SELECT 1
-    FROM enrollments e
+    SELECT 1 FROM enrollments e
     WHERE e.student_id = s.student_id
 );
 ```
+**Result:** students with no enrollment.
 
-This is a robust anti-join pattern and avoids the `NULL` trap associated
-with `NOT IN`.
+### Correlated subquery
 
-## Correlated subquery
+References a value from the current outer row:
 
-A subquery that references a row from the outer query:
-
-``` sql
+```sql
 SELECT e.employee_name, e.salary
 FROM employees e
 WHERE e.salary > (
@@ -1160,23 +1001,21 @@ WHERE e.salary > (
     WHERE e2.department_id = e.department_id
 );
 ```
+**Result:** employees paid above their own department's average.
 
-This returns employees paid above their own department's average.
+### ANY and ALL
 
-## ANY and ALL
+- `x > ANY (subquery)`: greater than at least one returned value.
+- `x > ALL (subquery)`: greater than every returned value.
 
-``` sql
-WHERE salary > ANY (SELECT salary FROM employees WHERE department_id = 2)
-WHERE salary > ALL (SELECT salary FROM employees WHERE department_id = 2)
+```sql
+SELECT 80 > ANY (SELECT salary FROM employees WHERE department_id = 10);
 ```
+**Result:** `TRUE` if 80 is greater than at least one salary in that department (with the example salaries above, `FALSE`).
 
--   `> ANY`: greater than at least one value.
--   `> ALL`: greater than every value.
--   Empty-set and `NULL` behavior matters; test edge cases.
+### Subquery in FROM (derived table)
 
-## Subquery in FROM
-
-``` sql
+```sql
 SELECT city, avg_marks
 FROM (
     SELECT city, AVG(marks) AS avg_marks
@@ -1185,64 +1024,55 @@ FROM (
 ) AS city_summary
 WHERE avg_marks >= 80;
 ```
+**Result:** grouped cities whose average marks are at least 80. A derived table in PostgreSQL needs an alias.
 
-A derived table in `FROM` needs an alias in PostgreSQL.
+### Multi-column/row-value IN
 
-# 18. Set operations
+Useful when two columns together identify a row:
 
-Set operations combine compatible query results. Each query should
-return the same number of columns with compatible types.
+```sql
+SELECT *
+FROM Sales s
+WHERE (s.product_id, s.year) IN (
+    SELECT product_id, MIN(year)
+    FROM Sales
+    GROUP BY product_id
+);
+```
+**Result:** the first-year row (or rows if a product has multiple rows in its first year) for each product.
 
-## UNION
+## 17. Set operations
 
-Combines results and removes duplicates:
+Each query must return the same number of columns with compatible types.
 
-``` sql
+| Operation | What it does |
+|---|---|
+| `UNION` | combines results and removes duplicate rows |
+| `UNION ALL` | combines results and keeps duplicates |
+| `INTERSECT` | keeps rows appearing in both results |
+| `EXCEPT` | rows in first result but not second |
+
+```sql
 SELECT city FROM students
 UNION
 SELECT city FROM employees;
 ```
+**Result:** unique city values across both query results.
 
-## UNION ALL
-
-Keeps duplicates and is often faster:
-
-``` sql
+```sql
 SELECT city FROM students
 UNION ALL
 SELECT city FROM employees;
 ```
+**Result:** all rows from both results, including duplicates.
 
-## INTERSECT
+Use `UNION ALL` when duplicates are required or impossible and deduplication is unnecessary. Final sorting normally goes at the end of the compound query.
 
-Returns rows present in both results:
+## 18. CTE — WITH
 
-``` sql
-SELECT city FROM students
-INTERSECT
-SELECT city FROM employees;
-```
+A Common Table Expression (CTE) names a query result for use by the statement that follows. It improves readability and helps split a complicated problem into steps. It is not automatically faster than a subquery.
 
-## EXCEPT
-
-Returns rows from the first result that do not appear in the second:
-
-``` sql
-SELECT city FROM students
-EXCEPT
-SELECT city FROM employees;
-```
-
-The final `ORDER BY` normally belongs at the end of the compound query.
-Parenthesize component queries when their individual limits/orderings
-are needed.
-
-# 19. CTEs and recursive CTEs
-
-CTE stands for Common Table Expression. It is introduced with `WITH` and
-gives a subquery a name.
-
-``` sql
+```sql
 WITH high_scorers AS (
     SELECT student_id, name, marks
     FROM students
@@ -1252,122 +1082,110 @@ SELECT *
 FROM high_scorers
 ORDER BY marks DESC;
 ```
+**Result:** Priya (92), Neha (88), Ritik (85).
 
 Multiple CTEs:
 
-``` sql
-WITH city_averages AS (
+```sql
+WITH city_avg AS (
     SELECT city, AVG(marks) AS avg_marks
     FROM students
     GROUP BY city
 ),
-above_average_cities AS (
+qualified AS (
     SELECT city, avg_marks
-    FROM city_averages
+    FROM city_avg
     WHERE avg_marks >= 80
 )
-SELECT *
-FROM above_average_cities;
+SELECT * FROM qualified;
 ```
+**Result:** cities whose average marks are at least 80.
 
-CTEs improve readability, especially for multi-step problems. They are
-not automatically faster than subqueries; PostgreSQL may inline or
-materialize CTEs depending on the query and hints.
+Recursive CTEs generate rows repeatedly, for example a number sequence or hierarchy traversal:
 
-## Recursive CTE
-
-Useful for hierarchical data such as employee reporting structures,
-category trees, and graph traversal.
-
-``` sql
-WITH RECURSIVE numbers(n) AS (
+```sql
+WITH RECURSIVE nums(n) AS (
     SELECT 1
     UNION ALL
-    SELECT n + 1
-    FROM numbers
-    WHERE n < 5
+    SELECT n + 1 FROM nums WHERE n < 5
 )
-SELECT n
-FROM numbers;
+SELECT n FROM nums;
 ```
+**Result:** `1, 2, 3, 4, 5`.
 
-Result: 1 through 5.
+Recursive structure: anchor query → `UNION ALL` → recursive query → stop condition. Prevent cycles in hierarchy/graph data.
 
-Recursive structure: 1. Anchor query: starting rows. 2. `UNION ALL`. 3.
-Recursive query: references the CTE and generates the next rows. 4. Stop
-when the recursive query produces no more rows or the condition stops
-expansion.
+## 19. Window functions
 
-For graphs/hierarchies, protect against cycles and unbounded recursion.
+A window function calculates across related rows **without collapsing them** into one row per group. This is the key difference from `GROUP BY`.
 
-# 20. Window functions
+General form:
 
-Window functions calculate values across a related set of rows **without
-collapsing the rows into one row per group**.
-
-General syntax:
-
-``` sql
+```sql
 function_name(...) OVER (
-    PARTITION BY ...
-    ORDER BY ...
+    PARTITION BY group_column
+    ORDER BY sort_column
     ROWS BETWEEN ... AND ...
 )
 ```
 
-## `ROW_NUMBER`, `RANK`, `DENSE_RANK`
+- `PARTITION BY`: restart calculation for each group.
+- `ORDER BY`: define row order inside the window.
+- Frame: define which rows contribute to the current calculation.
 
-``` sql
-SELECT name, city, marks,
-       ROW_NUMBER() OVER (PARTITION BY city ORDER BY marks DESC) AS row_num,
-       RANK()       OVER (PARTITION BY city ORDER BY marks DESC) AS rank_num,
-       DENSE_RANK() OVER (PARTITION BY city ORDER BY marks DESC) AS dense_rank_num
-FROM students;
+### ROW_NUMBER, RANK, DENSE_RANK
+
+For values `100, 100, 80` in descending order:
+
+| Value | ROW_NUMBER | RANK | DENSE_RANK |
+|---:|---:|---:|---:|
+| 100 | 1 | 1 | 1 |
+| 100 | 2 | 1 | 1 |
+| 80 | 3 | 3 | 2 |
+
+- `ROW_NUMBER`: always unique sequence.
+- `RANK`: ties share rank; next rank has a gap.
+- `DENSE_RANK`: ties share rank; no gap.
+
+```sql
+SELECT employee_id, department_id, salary,
+       ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC, employee_id) AS rn
+FROM employees;
 ```
+**Result:** each employee gets a row number within their department, highest salary first; employee ID breaks ties.
 
--   `ROW_NUMBER`: unique sequential number even for ties.
--   `RANK`: ties share a rank; gaps follow (1, 1, 3).
--   `DENSE_RANK`: ties share a rank; no gaps (1, 1, 2).
+### Top N per group
 
-Add a tie-breaker to `ROW_NUMBER` if deterministic ordering is needed,
-e.g. `ORDER BY marks DESC, student_id`.
-
-## Top N per group
-
-``` sql
+```sql
 WITH ranked AS (
-    SELECT s.*,
+    SELECT e.*,
            ROW_NUMBER() OVER (
-               PARTITION BY city
-               ORDER BY marks DESC, student_id
+               PARTITION BY department_id
+               ORDER BY salary DESC, employee_id
            ) AS rn
-    FROM students s
+    FROM employees e
 )
 SELECT *
 FROM ranked
 WHERE rn <= 2;
 ```
+**Result:** up to two employees per department. Use `RANK`/`DENSE_RANK` if ties should include additional rows.
 
-Use `RANK` or `DENSE_RANK` instead if ties should cause more than N rows
-to be returned.
+### LAG and LEAD
 
-## `LAG` and `LEAD`
+Read a value from a previous or following row:
 
-Access a previous or following row in the window order:
-
-``` sql
-SELECT name, marks,
+```sql
+SELECT student_id, marks,
        LAG(marks) OVER (ORDER BY student_id) AS previous_marks,
        LEAD(marks) OVER (ORDER BY student_id) AS next_marks
 FROM students;
 ```
+**Result:** each student's marks plus the previous/next student's marks; first previous and last next values are `NULL`.
 
-Can compare current and previous values, detect changes, and calculate
-period-over-period differences.
+### Running total
 
-## Running totals and moving averages
-
-``` sql
+```sql
 SELECT student_id, marks,
        SUM(marks) OVER (
            ORDER BY student_id
@@ -1375,10 +1193,11 @@ SELECT student_id, marks,
        ) AS running_total
 FROM students;
 ```
+**Result:** running totals `85, 161, 253, 341, 408` in student ID order.
 
-Moving average over the current and previous two rows:
+### Moving average
 
-``` sql
+```sql
 SELECT student_id, marks,
        AVG(marks) OVER (
            ORDER BY student_id
@@ -1386,937 +1205,1235 @@ SELECT student_id, marks,
        ) AS moving_avg
 FROM students;
 ```
+**Result:** average of the current row and up to two preceding rows.
 
-## `FIRST_VALUE`, `LAST_VALUE`, `NTH_VALUE`
+### FIRST_VALUE and LAST_VALUE
 
-These depend on window ordering and frame definitions. `LAST_VALUE` can
-surprise beginners because the default frame often ends at the current
-row/peer group, not necessarily the end of the entire partition. To get
-the final value for a partition:
+`LAST_VALUE` can surprise beginners because the default frame often ends at the current row/peer group. To get the final value across the entire partition, specify the full frame:
 
-``` sql
+```sql
 LAST_VALUE(marks) OVER (
     PARTITION BY city
     ORDER BY marks
     ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 )
 ```
+**Result:** the highest mark in each city (with ascending order), repeated for every row in that city.
 
-## Window frame basics
+Window results are usually filtered in an outer query/CTE because window functions are evaluated after `WHERE`.
 
--   `PARTITION BY`: split rows into independent groups.
--   `ORDER BY`: determine row order within each partition.
--   `ROWS`: frame based on physical row positions.
--   `RANGE` / `GROUPS`: frame semantics based on ordering values or peer
-    groups.
+## 20. NULL handling
 
-When a running aggregate should advance one row at a time, explicitly
-using `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` is often clear
-and avoids peer-group surprises.
+`NULL` means missing, unknown, or not applicable. It is not zero and not an empty string.
 
-Window functions are commonly computed after `WHERE` and `GROUP BY`, so
-filtering on a window result usually requires a subquery or CTE.
+Wrong:
 
-# 21. Conditional aggregation and common patterns
+```sql
+SELECT * FROM students WHERE city = NULL;
+```
+**Result:** no rows; comparisons to `NULL` are unknown.
 
-## Count rows matching a condition
+Correct:
 
-``` sql
-SELECT
-    COUNT(*) AS total,
-    COUNT(*) FILTER (WHERE marks >= 80) AS passed_threshold
+```sql
+SELECT * FROM students WHERE city IS NULL;
+```
+**Result:** Karan.
+
+```sql
+SELECT * FROM students WHERE city IS NOT NULL;
+```
+**Result:** Ritik, Aman, Priya, Neha.
+
+### COALESCE
+
+Returns the first non-NULL argument:
+
+```sql
+SELECT name, COALESCE(city, 'Unknown') AS city
 FROM students;
 ```
+**Result:** Karan's city displays as `Unknown`; other city values remain unchanged.
 
-Portable-style alternative:
+### NULLIF
 
-``` sql
-SELECT SUM(CASE WHEN marks >= 80 THEN 1 ELSE 0 END) AS passed_threshold
+Returns `NULL` when two arguments are equal:
+
+```sql
+SELECT 10 / NULLIF(0, 0);
+```
+**Result:** `NULL`, not a division-by-zero error.
+
+### Three-valued logic
+
+A condition can be TRUE, FALSE, or UNKNOWN. `WHERE` keeps only TRUE rows. For example, `marks <> 90` does not include rows where `marks` is `NULL`.
+
+Null-safe comparisons:
+
+- `a IS DISTINCT FROM b`: true when values differ; treats NULL as a comparable value.
+- `a IS NOT DISTINCT FROM b`: true when values are equal, including NULL vs NULL.
+
+## 21. CASE expressions
+
+`CASE` is SQL's if/else expression. It returns a value.
+
+```sql
+SELECT name, marks,
+       CASE
+           WHEN marks >= 90 THEN 'Excellent'
+           WHEN marks >= 75 THEN 'Good'
+           WHEN marks >= 60 THEN 'Average'
+           ELSE 'Needs improvement'
+       END AS grade
 FROM students;
 ```
+**Result:** Ritik–Good, Aman–Good, Priya–Excellent, Neha–Good, Karan–Average.
 
-## Percentage
+Simple CASE:
 
-``` sql
-SELECT
-    100.0 * COUNT(*) FILTER (WHERE marks >= 40)
-    / NULLIF(COUNT(*), 0) AS pass_percentage
+```sql
+SELECT name,
+       CASE city
+           WHEN 'Delhi' THEN 'North'
+           WHEN 'Mumbai' THEN 'West'
+           ELSE 'Other'
+       END AS region
 FROM students;
 ```
+**Result:** Delhi students → North; Priya → West; Jaipur and NULL city → Other.
 
-Use `100.0` or cast to a decimal type to avoid integer division.
-`NULLIF` protects against division by zero.
+`CASE` can be used in `SELECT`, `ORDER BY`, `WHERE`, and inside aggregates.
 
-## Find duplicates
-
-``` sql
-SELECT email, COUNT(*) AS occurrences
-FROM users
-GROUP BY email
-HAVING COUNT(*) > 1;
-```
-
-If nulls should not be included, add `WHERE email IS NOT NULL`.
-
-## Rows whose value equals the maximum
-
-``` sql
-SELECT *
-FROM employees
-WHERE salary = (SELECT MAX(salary) FROM employees);
-```
-
-This returns all tied highest-paid employees.
-
-## Second-highest distinct value
-
-``` sql
-SELECT MAX(salary) AS second_highest_salary
-FROM employees
-WHERE salary < (SELECT MAX(salary) FROM employees);
-```
-
-If there is no second distinct salary, the result is `NULL`.
-
-Alternative using ranking:
-
-``` sql
-WITH ranked AS (
-    SELECT salary,
-           DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
-    FROM employees
-)
-SELECT DISTINCT salary
-FROM ranked
-WHERE rnk = 2;
-```
-
-## Employees earning above their department average
-
-``` sql
-SELECT e.*
-FROM employees e
-WHERE e.salary > (
-    SELECT AVG(e2.salary)
-    FROM employees e2
-    WHERE e2.department_id = e.department_id
-);
-```
-
-## Find entities with no related rows
-
-``` sql
-SELECT c.*
-FROM customers c
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM orders o
-    WHERE o.customer_id = c.customer_id
-);
-```
-
-## Latest row per group
-
-``` sql
-WITH ranked AS (
-    SELECT o.*,
-           ROW_NUMBER() OVER (
-               PARTITION BY customer_id
-               ORDER BY order_date DESC, order_id DESC
-           ) AS rn
-    FROM orders o
-)
-SELECT *
-FROM ranked
-WHERE rn = 1;
-```
-
-## Consecutive dates / gaps and islands
-
-Common techniques include `LAG` to compare a row with its predecessor,
-row-number differences for consecutive sequences, and recursive CTEs for
-more complicated traversals. Always define what counts as consecutive
-and how duplicates/nulls should behave.
-
-# 22. ALTER, DROP, TRUNCATE, and schema changes
+## 22. DDL — changing table structure
 
 Add a column:
 
-``` sql
-ALTER TABLE students
-ADD COLUMN email TEXT;
+```sql
+ALTER TABLE students ADD COLUMN email TEXT;
 ```
+**Result:** `email` column is added; existing rows get `NULL`.
 
 Change a type:
 
-``` sql
-ALTER TABLE students
-ALTER COLUMN marks TYPE NUMERIC(5, 2);
+```sql
+ALTER TABLE students ALTER COLUMN marks TYPE NUMERIC(5,2);
 ```
+**Result:** marks can now store decimal values such as `85.50` (conversion must be possible).
 
-Set/drop a default:
+Set/remove default:
 
-``` sql
-ALTER TABLE students
-ALTER COLUMN marks SET DEFAULT 0;
-
-ALTER TABLE students
-ALTER COLUMN marks DROP DEFAULT;
+```sql
+ALTER TABLE students ALTER COLUMN marks SET DEFAULT 0;
+ALTER TABLE students ALTER COLUMN marks DROP DEFAULT;
 ```
+**Result:** first sets the default to zero; second removes it.
 
-Set a column not null (existing rows must satisfy the rule):
+Rename:
 
-``` sql
-ALTER TABLE students
-ALTER COLUMN name SET NOT NULL;
-```
-
-Add a named constraint:
-
-``` sql
-ALTER TABLE students
-ADD CONSTRAINT marks_range CHECK (marks BETWEEN 0 AND 100);
-```
-
-Rename a column/table:
-
-``` sql
+```sql
 ALTER TABLE students RENAME COLUMN name TO student_name;
-ALTER TABLE students RENAME TO learners;
 ```
+**Result:** column is renamed; its data remains.
 
-Drop a column:
+Remove column/table:
 
-``` sql
+```sql
 ALTER TABLE students DROP COLUMN email;
-```
-
-Remove a table:
-
-``` sql
 DROP TABLE students;
 ```
+**Result:** first removes the column and its data; second removes the table and all its data/definition.
 
-Remove all rows:
+### DELETE vs TRUNCATE vs DROP
 
-``` sql
+| Command | Effect | WHERE? |
+|---|---|---|
+| `DELETE` | removes selected rows; table remains | Yes |
+| `TRUNCATE` | removes all rows efficiently; table remains | No |
+| `DROP` | removes the table object | No |
+
+```sql
 TRUNCATE TABLE students;
 ```
+**Result:** all rows removed; table structure remains. These are destructive operations; use care.
 
-Differences: - `DELETE`: removes selected rows and supports `WHERE`. -
-`TRUNCATE`: removes all rows efficiently; no `WHERE`. - `DROP`: removes
-the table object itself.
-
-`TRUNCATE` and `DROP` are destructive. Transactions can roll back many
-such changes in PostgreSQL, but never rely on rollback as a substitute
-for care.
-
-# 23. Transactions and concurrency basics
+## 23. Transactions and ACID
 
 A transaction groups statements into one logical unit.
 
-``` sql
+```sql
 BEGIN;
-
-UPDATE accounts
-SET balance = balance - 100
-WHERE account_id = 1;
-
-UPDATE accounts
-SET balance = balance + 100
-WHERE account_id = 2;
-
+UPDATE accounts SET balance = balance - 100 WHERE account_id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE account_id = 2;
 COMMIT;
 ```
+**Result:** both updates are saved together if the transaction commits successfully.
 
-If something goes wrong before commit:
-
-``` sql
+```sql
 ROLLBACK;
 ```
+**Result:** undoes uncommitted changes in the current transaction.
 
-Savepoints:
+Savepoint:
 
-``` sql
+```sql
 BEGIN;
 UPDATE students SET marks = marks + 1 WHERE student_id = 1;
-SAVEPOINT before_second_change;
+SAVEPOINT after_first;
 UPDATE students SET marks = marks + 1 WHERE student_id = 2;
-ROLLBACK TO SAVEPOINT before_second_change;
+ROLLBACK TO SAVEPOINT after_first;
 COMMIT;
 ```
+**Result:** student 1's update is saved; student 2's update is undone.
 
-ACID: - **Atomicity:** all-or-nothing transaction behavior. -
-**Consistency:** constraints and rules remain satisfied. -
-**Isolation:** concurrent transactions are controlled according to the
-isolation level. - **Durability:** committed changes persist according
-to the system's durability guarantees.
+ACID:
+- **Atomicity:** all-or-nothing.
+- **Consistency:** constraints/rules remain satisfied.
+- **Isolation:** concurrent transactions are controlled.
+- **Durability:** committed changes persist.
 
-PostgreSQL isolation levels include Read Committed (default), Repeatable
-Read, and Serializable, plus Read Uncommitted which behaves like Read
-Committed in PostgreSQL. Learn locking, deadlocks, MVCC, and transaction
-anomalies after core querying.
+PostgreSQL's default isolation level is Read Committed. Other important levels include Repeatable Read and Serializable. Learn MVCC, locks, deadlocks, and isolation anomalies after core querying.
 
-# 24. Views and materialized views
+## 24. Views, indexes, normalization, and performance
 
-A view stores a query definition:
+### Views
 
-``` sql
+A view stores a query definition, not a separate copy of its result:
+
+```sql
 CREATE VIEW high_scorers AS
 SELECT student_id, name, marks
 FROM students
 WHERE marks >= 85;
 ```
+**Result:** view is created.
 
-Use it:
-
-``` sql
+```sql
 SELECT * FROM high_scorers;
 ```
+**Result:** currently qualifying students; normal views reflect current underlying table data.
 
-Replace/drop:
-
-``` sql
+```sql
 CREATE OR REPLACE VIEW high_scorers AS
-SELECT student_id, name, marks
-FROM students
-WHERE marks >= 90;
-
-DROP VIEW high_scorers;
+SELECT student_id, name, marks FROM students WHERE marks >= 90;
 ```
+**Result:** view definition is replaced to show only marks >= 90.
 
-A materialized view stores the query result physically:
+### Materialized views
 
-``` sql
+Store a physical snapshot of a query result:
+
+```sql
 CREATE MATERIALIZED VIEW city_stats AS
 SELECT city, COUNT(*) AS student_count, AVG(marks) AS avg_marks
 FROM students
 GROUP BY city;
 ```
+**Result:** a saved result snapshot is created.
 
-Refresh it after source data changes:
-
-``` sql
+```sql
 REFRESH MATERIALIZED VIEW city_stats;
 ```
+**Result:** snapshot is recalculated from current source data. It can be stale until refreshed.
 
-A materialized view can make repeated expensive reads faster but can
-become stale until refreshed.
+### Indexes
 
-# 25. Indexes and performance
+An index can speed up lookups, joins, and sorting, but uses storage and adds work to inserts/updates/deletes.
 
-An index can help PostgreSQL find rows faster, but it costs disk space
-and adds work to inserts/updates/deletes.
-
-Basic B-tree index:
-
-``` sql
+```sql
 CREATE INDEX idx_students_city ON students(city);
 ```
+**Result:** a B-tree index is created on `city`.
 
-Composite index:
+Other useful types:
+- composite index: `CREATE INDEX ... ON table(col1, col2)`;
+- unique index: rejects duplicate indexed values;
+- partial index: indexes only rows satisfying a `WHERE` condition;
+- expression index: e.g. `CREATE INDEX ... ON users(LOWER(email))`.
 
-``` sql
-CREATE INDEX idx_students_city_marks
-ON students(city, marks DESC);
+Column order matters in composite indexes. An index on `(city, marks)` is especially useful when queries filter by `city`, optionally followed by marks. Do not add indexes blindly.
+
+Use:
+
+```sql
+EXPLAIN SELECT * FROM students WHERE city = 'Delhi';
 ```
+**Result:** PostgreSQL's planned execution steps and estimated costs. `EXPLAIN ANALYZE` actually runs the query and reports measured timing/row counts.
 
-Column order matters. An index on `(city, marks)` is especially useful
-for queries filtering by `city`, and can help with sorting/filtering by
-`marks` within a city.
+### Normalization
 
-Unique index:
+Normalization organises data to reduce unnecessary duplication and update anomalies.
 
-``` sql
-CREATE UNIQUE INDEX idx_users_email_unique ON users(email);
+- **1NF:** each field contains one value; avoid repeating groups.
+- **2NF:** in 1NF and every non-key attribute depends on the whole candidate key (relevant with composite keys).
+- **3NF:** in 2NF and non-key attributes do not depend transitively on a key.
+- **Denormalization:** intentionally duplicates/precomputes data for read performance, with consistency trade-offs.
+
+Typical relationships:
+- one-to-one,
+- one-to-many,
+- many-to-many using a junction table.
+
+## 25. Useful PostgreSQL features
+
+### RETURNING
+
+Return rows changed by `INSERT`, `UPDATE`, or `DELETE`:
+
+```sql
+DELETE FROM students WHERE student_id = 5 RETURNING *;
 ```
+**Result:** deleted student row is returned.
 
-Partial index:
+### DISTINCT ON
 
-``` sql
-CREATE INDEX idx_active_users
-ON users(created_at)
-WHERE is_active = TRUE;
+PostgreSQL-specific shortcut for one chosen row per group:
+
+```sql
+SELECT DISTINCT ON (product_id) product_id, change_date, new_price
+FROM Products
+ORDER BY product_id, change_date DESC;
 ```
+**Result:** latest dated row per product (add a unique tie-breaker if dates can tie).
 
-Expression index:
+### FILTER
 
-``` sql
-CREATE INDEX idx_users_lower_email ON users(LOWER(email));
+```sql
+SELECT COUNT(*) FILTER (WHERE marks >= 80) FROM students;
 ```
+**Result:** `3`.
 
-This can help queries using the same expression, such as
-`WHERE LOWER(email) = LOWER('A@EXAMPLE.COM')`.
+### generate_series
 
-Inspect query plans:
+Generate a sequence of values:
 
-``` sql
-EXPLAIN
-SELECT *
-FROM students
-WHERE city = 'Delhi';
-
-EXPLAIN ANALYZE
-SELECT *
-FROM students
-WHERE city = 'Delhi';
+```sql
+SELECT generate_series(1, 5);
 ```
+**Result:** five rows: `1` through `5`.
 
-`EXPLAIN ANALYZE` actually runs the query. Be careful with expensive or
-data-modifying statements. Learn to interpret sequential scans, index
-scans, join algorithms, row estimates, actual rows, and execution time.
+### JSONB
 
-General advice: - Measure before optimizing. - Index columns used
-frequently in selective filters, joins, and ordering, based on
-workload. - Do not index every column. - Keep statistics current;
-PostgreSQL uses `ANALYZE` and autovacuum. - Avoid applying a function to
-an indexed column unless a matching expression index or other strategy
-is used. - Select only the columns you need. - Use appropriate types and
-constraints.
+`JSONB` stores JSON in a queryable binary representation. PostgreSQL provides operators such as `->` (JSON value) and `->>` (text value).
 
-# 26. Normalization and relationships
-
-Even when focusing on query problems, understand schema structure.
-
--   **1NF:** values are atomic for the intended model; avoid repeating
-    groups in a single field.
--   **2NF:** in 1NF, and every non-key attribute depends on the whole
-    candidate key, not just part of a composite key.
--   **3NF:** in 2NF, and non-key attributes do not have inappropriate
-    transitive dependencies on candidate keys.
--   **BCNF:** every determinant is a candidate key (informally, each
-    nontrivial functional dependency has a superkey on the left).
-
-Normalization reduces duplication and update anomalies. Denormalization
-can be useful for measured performance or reporting needs, but should be
-intentional.
-
-Common relationship patterns: - One-to-one: unique foreign key. -
-One-to-many: foreign key on the many side. - Many-to-many: junction
-table with two foreign keys, often a composite primary key.
-
-# 27. PostgreSQL-specific features
-
-## `RETURNING`
-
-Return changed rows without a separate query:
-
-``` sql
-UPDATE students
-SET marks = marks + 1
-WHERE city = 'Delhi'
-RETURNING student_id, name, marks;
+```sql
+SELECT '{"name":"Ritik","age":20}'::JSONB ->> 'name';
 ```
+**Result:** `Ritik`.
 
-## `ILIKE`
+### Arrays
 
-Case-insensitive pattern matching:
+PostgreSQL supports array types and array operators. Use arrays when the data really represents a collection; for relational data with independent searchable items, a separate child table is often better.
 
-``` sql
-SELECT * FROM students WHERE name ILIKE 'ri%';
-```
+### LATERAL
 
-## `DISTINCT ON`
+`LATERAL` lets a `FROM` subquery refer to preceding `FROM` items. It is useful for top-N related rows per parent. It is an advanced feature; learn it after joins and subqueries.
 
-PostgreSQL extension for one row per distinct key, commonly used for
-latest-per-group queries:
+### Full-text search
 
-``` sql
-SELECT DISTINCT ON (customer_id) *
-FROM orders
-ORDER BY customer_id, order_date DESC, order_id DESC;
-```
+PostgreSQL includes text-search types/functions such as `to_tsvector` and `plainto_tsquery`, useful for searching words in documents. This is different from substring `LIKE` and regex matching.
 
-The `ORDER BY` should start with the `DISTINCT ON` expressions and then
-specify which row to keep.
+### Functions, procedures, triggers
 
-## `FILTER` on aggregates
+- Function: reusable database routine that returns a value or table.
+- Procedure: routine invoked with `CALL`, can support transaction control in allowed contexts.
+- Trigger: automatically runs a function when a table event occurs.
 
-``` sql
-SELECT COUNT(*) FILTER (WHERE marks >= 80)
-FROM students;
-```
+These are useful in database application development but are not usually required for beginner LeetCode SQL.
 
-## `generate_series`
+---
 
-Generate a series of numbers or timestamps:
+# Part B — How PostgreSQL processes a query
 
-``` sql
-SELECT generate_series(1, 10);
+## 26. Logical query processing order
 
-SELECT generate_series(
-    DATE '2026-10-01',
-    DATE '2026-10-07',
-    INTERVAL '1 day'
-);
-```
+A useful simplified order is:
 
-## Arrays
-
-``` sql
-SELECT ARRAY[1, 2, 3];
-SELECT 2 = ANY (ARRAY[1, 2, 3]);
-```
-
-Array operators and indexing are useful in some cases, but a normalized
-relational design is usually preferable for core entity relationships.
-
-## JSONB
-
-``` sql
-CREATE TABLE events (
-    event_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    payload JSONB NOT NULL
-);
-
-SELECT payload -> 'user' AS user_object,
-       payload ->> 'event_type' AS event_type_text
-FROM events;
-```
-
--   `->` returns JSON/JSONB.
--   `->>` returns text.
--   JSONB supports indexing strategies such as GIN indexes.
-
-## Upsert
-
-`INSERT ... ON CONFLICT ... DO UPDATE` is PostgreSQL's common upsert
-syntax (covered earlier).
-
-## `LATERAL`
-
-Allows a `FROM` subquery to reference preceding `FROM` items. It is
-useful for top-N-per-parent and correlated table expressions:
-
-``` sql
-SELECT c.customer_id, recent.order_id, recent.order_date
-FROM customers c
-LEFT JOIN LATERAL (
-    SELECT o.order_id, o.order_date
-    FROM orders o
-    WHERE o.customer_id = c.customer_id
-    ORDER BY o.order_date DESC
-    LIMIT 1
-) AS recent ON TRUE;
-```
-
-## Full-text search
-
-PostgreSQL has `tsvector`, `tsquery`, and matching operators such as
-`@@`; this is an advanced topic after ordinary `LIKE` and indexing.
-
-## Functions, procedures, and triggers
-
-These are useful for database-side logic, but LeetCode SQL generally
-focuses on queries rather than writing PL/pgSQL. Learn them after joins,
-subqueries, CTEs, and windows.
-
-# 28. Logical query processing order
-
-A useful mental model for a `SELECT` query is:
-
-1.  `FROM` and joins
-2.  `WHERE`
-3.  `GROUP BY`
-4.  `HAVING`
-5.  `SELECT` expressions
-6.  `DISTINCT`
-7.  `ORDER BY`
-8.  `LIMIT` / `OFFSET`
-
-This is a logical model, not a guarantee of the physical execution plan.
-
-It explains several common errors: - A `SELECT` alias usually cannot be
-referenced in `WHERE`, because `WHERE` is logically evaluated earlier. -
-`WHERE` cannot directly filter an aggregate such as `COUNT(*)`; use
-`HAVING` or a subquery. - Window results are commonly filtered in an
-outer query/CTE. - A final `ORDER BY` is required for guaranteed output
-order.
+1. `FROM` and `JOIN` — choose and combine source rows.
+2. `WHERE` — filter individual rows.
+3. `GROUP BY` — form groups.
+4. Aggregate calculations.
+5. `HAVING` — filter groups.
+6. `SELECT` — calculate output expressions.
+7. `DISTINCT` — remove duplicate output rows.
+8. `ORDER BY` — sort output.
+9. `LIMIT` / `OFFSET` — choose returned rows.
 
 Example:
 
-``` sql
-SELECT city, AVG(marks) AS avg_marks
+```sql
+SELECT city, COUNT(*) AS total
 FROM students
-WHERE marks IS NOT NULL
+WHERE marks >= 70
 GROUP BY city
-HAVING AVG(marks) > 75
-ORDER BY avg_marks DESC
-LIMIT 5;
+HAVING COUNT(*) >= 2
+ORDER BY total DESC;
 ```
+**Result:** Delhi with 2 students. First low-mark rows are removed, then remaining rows are grouped, and only groups of at least two remain.
 
-# 29. LeetCode SQL patterns and templates
+This is a *logical* explanation, not a promise about the physical execution plan.
 
-LeetCode schemas vary by problem. Read the table definitions and exact
-expected output carefully. Usually, write only the requested query, not
-`CREATE TABLE` or sample inserts. Use the SQL dialect selected by the
-platform; PostgreSQL and MySQL syntax are not identical.
+---
 
-## Pattern A: Simple filter
+# Part C — LeetCode and real-query patterns
 
-``` sql
-SELECT column1, column2
-FROM table_name
-WHERE condition;
-```
+## 27. Recognise the problem before writing SQL
 
-## Pattern B: Sort and top N
+| Problem wording | Pattern to consider |
+|---|---|
+| Show rows satisfying conditions | `SELECT` + `WHERE` |
+| Count rows per group | `GROUP BY` + `COUNT(*)` |
+| Count unique users/products | `COUNT(DISTINCT ...)` |
+| Groups with at least N rows | `HAVING COUNT(*) >= N` |
+| Include groups with zero matches | category table + `LEFT JOIN`, or fixed rows + `UNION ALL` |
+| Percentage meeting a condition | conditional count × `100.0` / total |
+| Keep rows with no related record | `NOT EXISTS` or `LEFT JOIN ... IS NULL` |
+| Check if related row exists | `EXISTS` |
+| Find first/last date per entity | `MIN` / `MAX` + join, or window ranking |
+| Retrieve columns from latest row | `ROW_NUMBER()` or join to max date |
+| Top row with tie rule | `ORDER BY aggregate DESC, tie_column ASC LIMIT 1` |
+| Compare to group average | correlated subquery or window average |
+| Previous/next row | `LAG` / `LEAD` |
+| Running total | `SUM(...) OVER (ORDER BY ...)` |
+| Consecutive rows | self join or `LAG` |
+| Combine independent answer rows | `UNION ALL` |
+| Validate text format | Regex (`~`) |
+| Change text case | `UPPER`, `LOWER`, `INITCAP`, `SUBSTRING` |
 
-``` sql
-SELECT *
-FROM table_name
-ORDER BY score DESC, id ASC
-LIMIT 3;
-```
+## 28. Core reusable templates
 
-## Pattern C: Group and filter groups
+### A. Count per group
 
-``` sql
+```sql
 SELECT category, COUNT(*) AS total
-FROM items
-GROUP BY category
-HAVING COUNT(*) >= 2;
+FROM Items
+GROUP BY category;
 ```
+**Result:** one row per category that exists, with its row count. Categories with zero rows do not appear.
 
-## Pattern D: Join two tables
+### B. Groups above a threshold
 
-``` sql
-SELECT a.id, b.value
-FROM table_a a
-JOIN table_b b ON b.a_id = a.id;
+```sql
+SELECT class
+FROM Courses
+GROUP BY class
+HAVING COUNT(*) >= 5;
 ```
+**Result:** classes with at least five records.
 
-## Pattern E: Keep all left rows
+### C. Conditional counts and percentage
 
-``` sql
-SELECT a.id, b.value
-FROM table_a a
-LEFT JOIN table_b b ON b.a_id = a.id;
+```sql
+SELECT
+    COUNT(*) AS total,
+    COUNT(*) FILTER (WHERE status = 'approved') AS approved,
+    ROUND(
+        100.0 * COUNT(*) FILTER (WHERE status = 'approved')
+        / NULLIF(COUNT(*), 0), 2
+    ) AS approved_percentage
+FROM Transactions;
 ```
+**Result:** one summary row; `NULL` percentage if there are no rows.
 
-## Pattern F: Find rows with no match
+### D. LEFT JOIN to preserve unmatched rows
 
-``` sql
-SELECT a.*
-FROM table_a a
+```sql
+SELECT c.customer_id, COUNT(o.order_id) AS order_count
+FROM Customers c
+LEFT JOIN Orders o ON o.customer_id = c.customer_id
+GROUP BY c.customer_id;
+```
+**Result:** every customer, including customers with zero orders. Use `COUNT(o.order_id)`, not `COUNT(*)`, because the unmatched left-join row still exists and would be counted by `COUNT(*)`.
+
+### E. Find missing related rows
+
+```sql
+SELECT c.customer_id
+FROM Customers c
 WHERE NOT EXISTS (
-    SELECT 1
-    FROM table_b b
-    WHERE b.a_id = a.id
+    SELECT 1 FROM Orders o
+    WHERE o.customer_id = c.customer_id
 );
 ```
+**Result:** customers with no matching order.
 
-## Pattern G: Compare to average
+Equivalent anti-join:
 
-``` sql
-SELECT *
-FROM employees
-WHERE salary > (SELECT AVG(salary) FROM employees);
+```sql
+SELECT c.customer_id
+FROM Customers c
+LEFT JOIN Orders o ON o.customer_id = c.customer_id
+WHERE o.customer_id IS NULL;
 ```
+**Result:** same unmatched customers, assuming `o.customer_id` is non-NULL for actual matching orders.
 
-## Pattern H: Rank within groups
+### F. Compare against an average
 
-``` sql
-WITH ranked AS (
-    SELECT t.*,
-           DENSE_RANK() OVER (
-               PARTITION BY group_id
-               ORDER BY score DESC
-           ) AS rnk
-    FROM table_name t
-)
-SELECT *
-FROM ranked
-WHERE rnk <= 3;
+```sql
+SELECT e.employee_id, e.salary
+FROM Employees e
+WHERE e.salary > (
+    SELECT AVG(e2.salary)
+    FROM Employees e2
+    WHERE e2.department_id = e.department_id
+);
 ```
+**Result:** employees whose salary is greater than their own department average.
 
-## Pattern I: Latest record per entity
+### G. Latest row per entity
 
-``` sql
+```sql
 WITH ranked AS (
     SELECT t.*,
            ROW_NUMBER() OVER (
-               PARTITION BY entity_id
-               ORDER BY created_at DESC, id DESC
+               PARTITION BY customer_id
+               ORDER BY order_date DESC, order_id DESC
            ) AS rn
-    FROM table_name t
+    FROM Orders t
 )
 SELECT *
 FROM ranked
 WHERE rn = 1;
 ```
+**Result:** one latest order per customer. The unique ID tie-breaker makes the choice deterministic.
 
-## Pattern J: Conditional count
+### H. First date per entity
 
-``` sql
-SELECT group_id,
-       COUNT(*) FILTER (WHERE status = 'active') AS active_count
-FROM table_name
-GROUP BY group_id;
+```sql
+SELECT customer_id, MIN(order_date) AS first_order
+FROM Orders
+GROUP BY customer_id;
 ```
+**Result:** one earliest date per customer. To retrieve other columns from that exact row, join back to the table or use `ROW_NUMBER()`.
 
-## Pattern K: Consecutive values / previous row
+### I. Second-highest distinct value
 
-``` sql
-WITH x AS (
-    SELECT *,
-           LAG(value) OVER (ORDER BY event_time) AS previous_value
-    FROM measurements
-)
-SELECT *
-FROM x
-WHERE value > previous_value;
+```sql
+SELECT MAX(salary) AS SecondHighestSalary
+FROM Employee
+WHERE salary < (SELECT MAX(salary) FROM Employee);
 ```
+**Result:** second-highest distinct salary; `NULL` if there is no second distinct value. Duplicates of the highest salary do not change the answer.
 
-## Pattern L: Duplicate values
+### J. Find duplicate values
 
-``` sql
-SELECT email
-FROM users
+```sql
+SELECT email, COUNT(*) AS occurrences
+FROM Person
 GROUP BY email
 HAVING COUNT(*) > 1;
 ```
+**Result:** emails appearing more than once and their counts.
 
-## Pattern M: Median / percentile
+### K. Delete duplicates, keep smallest ID
 
-PostgreSQL supports ordered-set aggregates such as:
-
-``` sql
-SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY salary)
-FROM employees;
+```sql
+DELETE FROM Person p1
+USING Person p2
+WHERE p1.email = p2.email
+  AND p1.id > p2.id;
 ```
+**Result:** duplicate rows with a larger ID are deleted; the smallest ID per email remains. Assumes IDs identify rows and email comparison should treat equal email strings as duplicates.
 
-`percentile_cont` may interpolate; `percentile_disc` returns an observed
-value.
+Alternative using a subquery:
 
-## Pattern N: Running sum
-
-``` sql
-SELECT account_id, event_time, amount,
-       SUM(amount) OVER (
-           PARTITION BY account_id
-           ORDER BY event_time, transaction_id
-           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-       ) AS running_balance_change
-FROM transactions;
-```
-
-Use a deterministic ordering when multiple rows share a timestamp.
-
-## Pattern O: Pivot-like output with conditional aggregation
-
-``` sql
-SELECT department_id,
-       COUNT(*) FILTER (WHERE gender = 'F') AS female_count,
-       COUNT(*) FILTER (WHERE gender = 'M') AS male_count
-FROM employees
-GROUP BY department_id;
-```
-
-## Pattern P: Percentage of total
-
-``` sql
-SELECT category,
-       COUNT(*) AS category_count,
-       100.0 * COUNT(*) / SUM(COUNT(*)) OVER () AS pct_of_total
-FROM products
-GROUP BY category;
-```
-
-## LeetCode-specific habits
-
--   Read whether the expected output includes duplicates.
--   Handle ties exactly as requested.
--   Determine whether missing values should be included.
--   Check whether the task asks for the second **row** or second
-    **distinct value**.
--   A left join can produce `NULL` for missing related records; use
-    `COALESCE` only if the expected output requires a replacement.
--   Don't add `ORDER BY` unless required or needed to define a
-    window/top-N result; platforms usually compare result sets according
-    to their own rules.
--   Use aliases exactly as requested when the expected column names
-    matter.
--   For "at least one" use `EXISTS` or `ANY` as appropriate; for "none"
-    use `NOT EXISTS`.
--   Test duplicates and edge cases mentally: empty groups, all-null
-    values, ties, no second-highest value, and missing relationships.
-
-# 30. Common mistakes and debugging
-
-1.  **Using `= NULL`:** use `IS NULL`.
-2.  **Forgetting `WHERE` in `UPDATE`/`DELETE`:** preview affected rows
-    with a `SELECT` first.
-3.  **Using aggregate functions in `WHERE`:** use `HAVING` or a
-    subquery.
-4.  **Selecting ungrouped columns:** aggregate them or include them in
-    the grouping logic.
-5.  **Using `COUNT(column)` when you need row count:** use `COUNT(*)`.
-6.  **Using `COUNT(*)` when you need non-null count:** use
-    `COUNT(column)`.
-7.  **Assuming `LIMIT` gives the highest values without `ORDER BY`:** it
-    does not.
-8.  **Ignoring ties:** choose `ROW_NUMBER`, `RANK`, or `DENSE_RANK`
-    based on the requirement.
-9.  **Using `NOT IN` with possible nulls:** consider `NOT EXISTS`.
-10. **Turning a left join into an inner join unintentionally:** check
-    filters on the right table.
-11. **Integer division:** cast to `NUMERIC` or use a decimal constant.
-12. **Wrong date boundary:** use a half-open timestamp range.
-13. **Missing alias for a derived table:** add `AS alias`.
-14. **Using a SELECT alias in WHERE:** repeat the expression or use a
-    subquery/CTE.
-15. **Forgetting duplicate behavior in UNION:** use `UNION ALL` when
-    duplicates should remain.
-16. **Relying on default row order:** specify `ORDER BY`.
-17. **Unstable window ordering:** add a tie-breaker when needed.
-18. **Confusing window functions with aggregates:** aggregates collapse
-    groups; window functions preserve rows.
-19. **Assuming a CTE is always faster:** optimize based on plans and
-    measurements.
-20. **Using the wrong dialect:** verify the platform is running
-    PostgreSQL if using PostgreSQL-specific syntax.
-
-Debug systematically: 1. Run the inner query by itself. 2. Check the
-number of rows after each join. 3. Verify join keys and whether
-duplicates multiply rows. 4. Inspect null behavior. 5. Test one small
-example by hand. 6. Check edge cases and tie behavior. 7. Read the exact
-error message and line/position. 8. Use `EXPLAIN` for performance
-questions.
-
-# 31. Suggested practice plan
-
-A practical 6-week sequence, adjustable to your schedule:
-
-### Week 1: Core querying
-
--   `SELECT`, aliases, `WHERE`, operators, `DISTINCT`
--   `ORDER BY`, `LIMIT`, `OFFSET`
--   `INSERT`, `UPDATE`, `DELETE`
--   `NULL`, `COALESCE`, `CASE`
--   Goal: 20--30 easy problems
-
-### Week 2: Aggregation and functions
-
--   `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`
--   `GROUP BY`, `HAVING`, conditional aggregation
--   String, numeric, and date functions
--   Goal: 20--30 easy/intermediate problems
-
-### Week 3: Joins
-
--   Inner, left, self, and multi-table joins
--   Unmatched rows and anti-joins
--   One-to-many and many-to-many relationships
--   Goal: 20--30 join problems
-
-### Week 4: Subqueries and CTEs
-
--   Scalar, correlated, `EXISTS`, `NOT EXISTS`, `IN`
--   Set operations
--   CTEs and recursive CTE basics
--   Goal: 15--25 intermediate problems
-
-### Week 5: Window functions
-
--   `ROW_NUMBER`, `RANK`, `DENSE_RANK`
--   `LAG`, `LEAD`, running aggregates
--   Top N per group, latest row per group
--   Goal: 15--25 intermediate problems
-
-### Week 6: Advanced patterns and review
-
--   Date ranges, percentages, duplicates, gaps/islands
--   `DISTINCT ON`, `FILTER`, `generate_series`
--   Review wrong answers and write clean solutions
--   Begin timed mixed-topic sets
-
-Do not measure mastery by how many topics you have read. Measure it by
-whether you can identify the right pattern and write the query without
-looking at a solution.
-
-# 32. Quick reference sheet
-
-``` sql
--- Select
-SELECT col1, col2 FROM table_name;
-
--- Filter
-SELECT * FROM table_name WHERE condition;
-
--- Unique values
-SELECT DISTINCT col FROM table_name;
-
--- Sort / top N
-SELECT * FROM table_name ORDER BY col DESC LIMIT 10;
-
--- Insert
-INSERT INTO table_name (col1, col2) VALUES (value1, value2);
-
--- Update
-UPDATE table_name SET col = value WHERE id = 1;
-
--- Delete
-DELETE FROM table_name WHERE id = 1;
-
--- Group
-SELECT category, COUNT(*)
-FROM table_name
-GROUP BY category
-HAVING COUNT(*) > 1;
-
--- Join
-SELECT *
-FROM a
-JOIN b ON b.a_id = a.id;
-
--- Left join
-SELECT *
-FROM a
-LEFT JOIN b ON b.a_id = a.id;
-
--- No match
-SELECT a.*
-FROM a
-WHERE NOT EXISTS (
-  SELECT 1 FROM b WHERE b.a_id = a.id
+```sql
+DELETE FROM Person
+WHERE id NOT IN (
+    SELECT MIN(id)
+    FROM Person
+    GROUP BY email
 );
-
--- CTE
-WITH x AS (SELECT ...)
-SELECT * FROM x;
-
--- Rank
-SELECT t.*,
-       DENSE_RANK() OVER (PARTITION BY group_id ORDER BY score DESC) AS rnk
-FROM t;
-
--- Null-safe fallback
-SELECT COALESCE(col, 'Unknown') FROM table_name;
-
--- Transaction
-BEGIN;
--- statements
-COMMIT; -- or ROLLBACK;
 ```
+**Result:** all but the smallest ID in each email group are deleted. Confirm null/unique-key assumptions before using this general pattern.
 
-------------------------------------------------------------------------
+### L. Consecutive values
 
-## Final learning advice
+Three adjacent equal values by increasing ID:
 
-1.  Keep a `.sql` file per topic in VS Code, such as
-    `01_select_where.sql`, `02_aggregates.sql`, `03_joins.sql`, and so
-    on.
-2.  Type examples rather than merely reading them.
-3.  Predict the result before executing each query.
-4.  For every LeetCode problem, explain why your query handles
-    duplicates, nulls, and ties.
-5.  Learn standard SQL patterns first, then PostgreSQL-specific tools.
-6.  Revisit wrong answers after a day or two.
-7.  Keep PostgreSQL documentation nearby:
-    https://www.postgresql.org/docs/current/
+```sql
+SELECT DISTINCT a.num AS ConsecutiveNums
+FROM Logs a
+JOIN Logs b ON b.id = a.id + 1
+JOIN Logs c ON c.id = b.id + 1
+WHERE a.num = b.num AND b.num = c.num;
+```
+**Result:** each number that appears in at least three consecutive IDs, once.
 
-**Best next step:** Work through sections 7--16 in order while
-practicing with small tables. Then study subqueries, CTEs, and window
-functions; these are especially important for intermediate and advanced
-SQL problems.
+Using `LAG`:
+
+```sql
+WITH checks AS (
+    SELECT num,
+           LAG(num, 1) OVER (ORDER BY id) AS prev1,
+           LAG(num, 2) OVER (ORDER BY id) AS prev2
+    FROM Logs
+)
+SELECT DISTINCT num
+FROM checks
+WHERE num = prev1 AND num = prev2;
+```
+**Result:** same qualifying numbers. “Consecutive” means adjacent rows in the specified order; it does not automatically mean consecutive calendar dates.
+
+### M. Running total
+
+```sql
+SELECT person_name, turn, weight,
+       SUM(weight) OVER (ORDER BY turn) AS total_weight
+FROM Queue;
+```
+**Result:** each person with cumulative weight up to their turn.
+
+To select the last person within a capacity:
+
+```sql
+SELECT person_name
+FROM (
+    SELECT person_name, turn,
+           SUM(weight) OVER (ORDER BY turn) AS total_weight
+    FROM Queue
+) q
+WHERE total_weight <= 1000
+ORDER BY turn DESC
+LIMIT 1;
+```
+**Result:** the last person in turn order whose cumulative weight does not exceed 1000. Sort by `turn`, the actual sequence column.
+
+### N. Fixed categories, including zero counts
+
+A normal `GROUP BY` cannot invent a category that has no rows. For a small fixed set:
+
+```sql
+SELECT 'Low Salary' AS category, COUNT(*) AS accounts_count
+FROM Accounts WHERE income < 20000
+UNION ALL
+SELECT 'Average Salary', COUNT(*)
+FROM Accounts WHERE income BETWEEN 20000 AND 50000
+UNION ALL
+SELECT 'High Salary', COUNT(*)
+FROM Accounts WHERE income > 50000;
+```
+**Result:** always three rows; categories with no matches have count `0`.
+
+### O. Choose one row with tie-breaking
+
+```sql
+SELECT u.name
+FROM Users u
+JOIN MovieRating mr ON mr.user_id = u.user_id
+GROUP BY u.user_id, u.name
+ORDER BY COUNT(*) DESC, u.name ASC
+LIMIT 1;
+```
+**Result:** user with the most ratings; alphabetical name breaks a tie. Put the tie-breaker in the same `ORDER BY` before `LIMIT`.
+
+### P. Monthly aggregation
+
+```sql
+SELECT TO_CHAR(trans_date, 'YYYY-MM') AS month,
+       COUNT(*) AS trans_count,
+       COUNT(*) FILTER (WHERE state = 'approved') AS approved_count,
+       SUM(amount) AS trans_total,
+       COALESCE(SUM(amount) FILTER (WHERE state = 'approved'), 0) AS approved_total
+FROM Transactions
+GROUP BY TO_CHAR(trans_date, 'YYYY-MM')
+ORDER BY month;
+```
+**Result:** one row per month with total and approved counts/amounts. `COALESCE` changes an empty approved sum from `NULL` to zero.
+
+### Q. First event and next-day activity
+
+```sql
+WITH first_login AS (
+    SELECT player_id, MIN(event_date) AS first_date
+    FROM Activity
+    GROUP BY player_id
+)
+SELECT COUNT(*)
+FROM first_login f
+WHERE EXISTS (
+    SELECT 1
+    FROM Activity a
+    WHERE a.player_id = f.player_id
+      AND a.event_date = f.first_date + INTERVAL '1 day'
+);
+```
+**Result:** number of players who logged in on the day immediately after their first login.
+
+### R. Count unique items and concatenate names
+
+```sql
+SELECT sell_date,
+       COUNT(DISTINCT product) AS num_sold,
+       STRING_AGG(DISTINCT product, ',' ORDER BY product) AS products
+FROM Activities
+GROUP BY sell_date
+ORDER BY sell_date;
+```
+**Result:** one row per date, with the number of unique products and alphabetically ordered product names.
+
+### S. Email/text validation
+
+```sql
+SELECT *
+FROM Users
+WHERE mail ~ '^[A-Za-z][A-Za-z0-9._-]*@leetcode[.]com$';
+```
+**Result:** only emails satisfying the complete LeetCode 1517 pattern.
+
+---
+
+# Part D — Worked LeetCode scenarios from practice
+
+These examples connect the concepts to common problem statements. Table names and columns follow the LeetCode problem schemas.
+
+## 29. Join and unmatched-row scenarios
+
+### LeetCode 1378 — Replace Employee ID With The Unique Identifier
+
+**Idea:** keep every employee, even if no unique ID exists. Use `LEFT JOIN`.
+
+```sql
+SELECT eu.unique_id, e.name
+FROM Employees e
+LEFT JOIN EmployeeUNI eu
+  ON eu.id = e.id;
+```
+**Result:** all employee names; `unique_id` is `NULL` where no matching row exists.
+
+### LeetCode 1581 — Customer Who Visited but Did Not Make Any Transactions
+
+**Idea:** visits with no matching transaction. Use `LEFT JOIN ... IS NULL`, then count visits per customer.
+
+```sql
+SELECT v.customer_id, COUNT(*) AS count_no_trans
+FROM Visits v
+LEFT JOIN Transactions t ON t.visit_id = v.visit_id
+WHERE t.transaction_id IS NULL
+GROUP BY v.customer_id;
+```
+**Result:** one row per customer with the number of visits that had no transaction.
+
+### LeetCode 1661 — Average Time of Process per Machine
+
+**Idea:** pair start and end rows from the same table using a self join; average end-start duration per machine.
+
+```sql
+SELECT a.machine_id,
+       ROUND(AVG(b.timestamp - a.timestamp), 3) AS processing_time
+FROM Activity a
+JOIN Activity b
+  ON a.machine_id = b.machine_id
+ AND a.process_id = b.process_id
+WHERE a.activity_type = 'start'
+  AND b.activity_type = 'end'
+GROUP BY a.machine_id;
+```
+**Result:** one average processing time per machine, rounded to three decimals.
+
+### LeetCode 1280 — Students and Examinations
+
+**Idea:** generate every student/subject combination, then left join exam attendance so zero counts are included.
+
+```sql
+SELECT s.student_id, s.student_name, sub.subject_name,
+       COUNT(e.subject_name) AS attended_exams
+FROM Students s
+CROSS JOIN Subjects sub
+LEFT JOIN Examinations e
+  ON e.student_id = s.student_id
+ AND e.subject_name = sub.subject_name
+GROUP BY s.student_id, s.student_name, sub.subject_name
+ORDER BY s.student_id, sub.subject_name;
+```
+**Result:** every student-subject pair, including pairs with zero exams. `COUNT(e.subject_name)` counts matched exam rows, not the preserved cross-join row.
+
+## 30. Aggregation and percentage scenarios
+
+### LeetCode 1934 — Confirmation Rate
+
+**Idea:** count confirmations per user; divide confirmed rows by all requested rows. Preserve users with no confirmations.
+
+```sql
+SELECT s.user_id,
+       ROUND(
+           COALESCE(
+               COUNT(c.user_id) FILTER (WHERE c.action = 'confirmed')::NUMERIC
+               / NULLIF(COUNT(c.user_id), 0),
+               0
+           ),
+           2
+       ) AS confirmation_rate
+FROM Signups s
+LEFT JOIN Confirmations c ON c.user_id = s.user_id
+GROUP BY s.user_id;
+```
+**Result:** one row per signup user; users without confirmation requests get `0.00`.
+
+### LeetCode 1251 — Average Selling Price
+
+**Idea:** join prices to units sold only when the purchase date falls inside the price period; calculate weighted average price.
+
+```sql
+SELECT p.product_id,
+       ROUND(
+           SUM(p.price * u.units)::NUMERIC / NULLIF(SUM(u.units), 0),
+           2
+       ) AS average_price
+FROM Prices p
+JOIN UnitsSold u
+  ON u.product_id = p.product_id
+ AND u.purchase_date BETWEEN p.start_date AND p.end_date
+GROUP BY p.product_id;
+```
+**Result:** average selling price per product, weighted by units sold.
+
+### LeetCode 1633 — Percentage of Users Attended a Contest
+
+```sql
+SELECT contest_id,
+       ROUND(
+           COUNT(DISTINCT user_id) * 100.0
+           / (SELECT COUNT(*) FROM Users),
+           2
+       ) AS percentage
+FROM Register
+GROUP BY contest_id
+ORDER BY percentage DESC, contest_id;
+```
+**Result:** each contest's percentage of all users who registered, highest percentage first.
+
+### LeetCode 1211 — Queries Quality and Percentage
+
+**Idea:** average `rating / position`; count ratings below 3 as a percentage.
+
+```sql
+SELECT query_name,
+       ROUND(AVG(rating::NUMERIC / position), 2) AS quality,
+       ROUND(
+           COUNT(*) FILTER (WHERE rating < 3) * 100.0 / COUNT(*),
+           2
+       ) AS poor_query_percentage
+FROM Queries
+GROUP BY query_name;
+```
+**Result:** one row per query name with quality and poor-query percentage.
+
+### LeetCode 1174 — Immediate Food Delivery II
+
+**Idea:** first order date per customer; calculate the percentage of those first orders that match preferred date.
+
+```sql
+WITH first_orders AS (
+    SELECT customer_id, MIN(order_date) AS first_date
+    FROM Delivery
+    GROUP BY customer_id
+)
+SELECT ROUND(
+    COUNT(*) FILTER (
+        WHERE d.order_date = d.customer_pref_delivery_date
+    ) * 100.0 / COUNT(*),
+    2
+) AS immediate_percentage
+FROM Delivery d
+JOIN first_orders f
+  ON f.customer_id = d.customer_id
+ AND f.first_date = d.order_date;
+```
+**Result:** percentage of customers whose first order was scheduled for their preferred date.
+
+## 31. Date and first/last-record scenarios
+
+### LeetCode 1193 — Monthly Transactions I
+
+```sql
+SELECT TO_CHAR(trans_date, 'YYYY-MM') AS month,
+       country,
+       COUNT(*) AS trans_count,
+       COUNT(*) FILTER (WHERE state = 'approved') AS approved_count,
+       SUM(amount) AS trans_total,
+       COALESCE(SUM(amount) FILTER (WHERE state = 'approved'), 0) AS approved_total
+FROM Transactions
+GROUP BY TO_CHAR(trans_date, 'YYYY-MM'), country
+ORDER BY month, country;
+```
+**Result:** one row per month and country with transaction counts and totals.
+
+### LeetCode 1141 — User Activity for the Past 30 Days I
+
+For the inclusive period June 28 through July 27, 2019:
+
+```sql
+SELECT activity_date AS day,
+       COUNT(DISTINCT user_id) AS active_users
+FROM Activity
+WHERE activity_date >= DATE '2019-06-28'
+  AND activity_date <  DATE '2019-07-28'
+GROUP BY activity_date;
+```
+**Result:** one row per date with distinct active users. The end boundary is exclusive, making the 30-day range clear.
+
+### LeetCode 550 — Game Play Analysis IV
+
+**Idea:** find each player's first login and check for a login exactly one day later.
+
+```sql
+WITH first_login AS (
+    SELECT player_id, MIN(event_date) AS first_date
+    FROM Activity
+    GROUP BY player_id
+)
+SELECT ROUND(
+    COUNT(*) FILTER (WHERE EXISTS (
+        SELECT 1
+        FROM Activity a
+        WHERE a.player_id = f.player_id
+          AND a.event_date = f.first_date + INTERVAL '1 day'
+    ))::NUMERIC
+    / NULLIF((SELECT COUNT(DISTINCT player_id) FROM Activity), 0),
+    2
+) AS fraction
+FROM first_login f;
+```
+**Result:** fraction of players who returned the day after their first login, rounded to two decimals.
+
+### LeetCode 1070 — Product Sales Analysis III
+
+**Idea:** find first year per product, then return the matching sales row(s).
+
+```sql
+SELECT product_id, year AS first_year, quantity, price
+FROM Sales s
+WHERE year = (
+    SELECT MIN(year)
+    FROM Sales
+    WHERE product_id = s.product_id
+);
+```
+**Result:** first-year sales rows for each product, including quantity and price from that year.
+
+### LeetCode 1164 — Product Price at a Given Date
+
+**Idea:** latest change on or before 2019-08-16; products with no qualifying change use default price 10.
+
+```sql
+SELECT product_id, new_price AS price
+FROM Products
+WHERE (product_id, change_date) IN (
+    SELECT product_id, MAX(change_date)
+    FROM Products
+    WHERE change_date <= DATE '2019-08-16'
+    GROUP BY product_id
+)
+UNION ALL
+SELECT DISTINCT product_id, 10 AS price
+FROM Products
+WHERE product_id NOT IN (
+    SELECT product_id
+    FROM Products
+    WHERE change_date <= DATE '2019-08-16'
+);
+```
+**Result:** one effective price per product on the target date. The second query branch includes products with no change on/before that date. This `NOT IN` is safe under the problem's non-null product ID constraint.
+
+## 32. Ranking, CASE, and set-operation scenarios
+
+### LeetCode 596 — Classes More Than 5 Students
+
+```sql
+SELECT class
+FROM Courses
+GROUP BY class
+HAVING COUNT(*) >= 5;
+```
+**Result:** classes containing at least five rows.
+
+### LeetCode 619 — Biggest Single Number
+
+```sql
+SELECT MAX(num) AS num
+FROM (
+    SELECT num
+    FROM MyNumbers
+    GROUP BY num
+    HAVING COUNT(*) = 1
+) AS single_values;
+```
+**Result:** largest number appearing exactly once; `NULL` if no number appears once.
+
+### LeetCode 1045 — Customers Who Bought All Products
+
+```sql
+SELECT customer_id
+FROM Customer
+GROUP BY customer_id
+HAVING COUNT(DISTINCT product_key) = (
+    SELECT COUNT(*) FROM Product
+);
+```
+**Result:** customers who bought every product. `DISTINCT` prevents repeated purchases from inflating the count.
+
+### LeetCode 1731 — The Number of Employees Which Report to Each Employee
+
+```sql
+SELECT e.reports_to AS employee_id,
+       m.name,
+       COUNT(*) AS reports_count,
+       ROUND(AVG(e.age)) AS average_age
+FROM Employees e
+JOIN Employees m ON m.employee_id = e.reports_to
+GROUP BY e.reports_to, m.name
+ORDER BY employee_id;
+```
+**Result:** each manager with number of direct reports and rounded average age of those reports.
+
+### LeetCode 1789 — Primary Department for Each Employee
+
+```sql
+SELECT employee_id, department_id
+FROM Employee
+WHERE primary_flag = 'Y'
+UNION
+SELECT employee_id, department_id
+FROM Employee
+GROUP BY employee_id, department_id
+HAVING COUNT(*) = 1;
+```
+**Result:** primary department for employees with multiple departments, plus their only department when they have one. Use the exact problem schema/constraints when applying this pattern.
+
+### LeetCode 610 — Triangle Judgement
+
+```sql
+SELECT x, y, z,
+       CASE
+           WHEN x + y > z AND x + z > y AND y + z > x
+           THEN 'Yes'
+           ELSE 'No'
+       END AS triangle
+FROM Triangle;
+```
+**Result:** `Yes` only when all three pairwise sums are strictly greater than the remaining side.
+
+### LeetCode 626 — Exchange Seats
+
+```sql
+SELECT
+    CASE
+        WHEN id % 2 = 1 AND id < (SELECT MAX(id) FROM Seat) THEN id + 1
+        WHEN id % 2 = 0 THEN id - 1
+        ELSE id
+    END AS id,
+    student
+FROM Seat
+ORDER BY id;
+```
+**Result:** students in adjacent seat IDs are swapped; the last student stays in place if the row count is odd. This assumes the problem's consecutive IDs begin at 1.
+
+### LeetCode 1341 — Movie Rating
+
+Two separate rankings are needed, combined with `UNION ALL`.
+
+```sql
+(SELECT u.name AS results
+ FROM Users u
+ JOIN MovieRating mr ON mr.user_id = u.user_id
+ GROUP BY u.user_id, u.name
+ ORDER BY COUNT(*) DESC, u.name ASC
+ LIMIT 1)
+UNION ALL
+(SELECT m.title AS results
+ FROM Movies m
+ JOIN MovieRating mr ON mr.movie_id = m.movie_id
+ WHERE mr.created_at >= DATE '2020-02-01'
+   AND mr.created_at < DATE '2020-03-01'
+ GROUP BY m.movie_id, m.title
+ ORDER BY AVG(mr.rating) DESC, m.title ASC
+ LIMIT 1);
+```
+**Result:** first row is the user with the most ratings (alphabetical tie-break); second row is the movie with the highest February 2020 average rating (alphabetical tie-break).
+
+**Important tie rule:** tie-break columns must be included in the same `ORDER BY` before `LIMIT`. Sorting outside after a `LIMIT` cannot change which tied row was selected.
+
+## 33. More problem-solving lessons
+
+### `COUNT(*)` vs `COUNT(column)` vs `COUNT(DISTINCT column)`
+
+For values `A, A, B, NULL`:
+- `COUNT(*)` = 4 rows.
+- `COUNT(value)` = 3 non-null values.
+- `COUNT(DISTINCT value)` = 2 unique non-null values.
+
+### Why `MAX(COUNT(*))` is usually invalid
+
+You cannot directly nest one aggregate inside another at the same query level. First calculate counts per group, then select the maximum in an outer query or order by the count.
+
+```sql
+SELECT MAX(group_count)
+FROM (
+    SELECT category, COUNT(*) AS group_count
+    FROM Items
+    GROUP BY category
+) q;
+```
+**Result:** largest group size.
+
+### `WHERE` vs `HAVING` vs `FILTER`
+
+- `WHERE`: remove source rows before grouping.
+- `HAVING`: remove completed groups.
+- `FILTER`: include only matching rows in one aggregate calculation while leaving other aggregates unaffected.
+
+### `UNION` vs `UNION ALL`
+
+`UNION` removes duplicate output rows; `UNION ALL` keeps them. If the problem asks for two answer rows even if their text happens to match, `UNION ALL` is generally the right choice.
+
+### `NOT IN` vs `NOT EXISTS`
+
+`NOT IN` can fail unexpectedly when the subquery includes `NULL`. `NOT EXISTS` checks for the absence of a matching row and is often the safer general anti-join.
+
+### Grouping with related descriptive columns
+
+When grouping by an ID and displaying a name, group by both ID and name for clarity:
+
+```sql
+SELECT department_id, department_name, COUNT(*)
+FROM employees
+JOIN departments USING (department_id)
+GROUP BY department_id, department_name;
+```
+**Result:** one row per department with its employee count.
+
+### Ordering is not automatic
+
+Always add `ORDER BY` when the problem requires a particular output order. Do not assume insertion order or index order.
+
+---
+
+# Part E — Debugging and revision
+
+## 34. Common mistakes
+
+| Mistake | Correct thinking |
+|---|---|
+| `column = NULL` | use `IS NULL` |
+| Using `WHERE COUNT(*) > ...` | use `HAVING` for aggregate conditions |
+| Counting after a `LEFT JOIN` with `COUNT(*)` | count a non-null right-table key when zero matches should be zero |
+| Using `COUNT(*)` when unique items are requested | use `COUNT(DISTINCT item)` |
+| Forgetting zero-count categories | create the categories and `LEFT JOIN`, or use fixed `UNION ALL` queries |
+| `NOT IN` subquery can return NULL | consider `NOT EXISTS` |
+| Integer division for percentage | multiply by `100.0` or cast to numeric |
+| Divide by zero | use `NULLIF(denominator, 0)` |
+| PostgreSQL `ROUND(double, 2)` | cast to `NUMERIC` |
+| `NUMERIC(2)` for two decimal places | use `NUMERIC(p,2)` if a fixed scale is needed |
+| Filtering right table in `WHERE` after LEFT JOIN | move the condition into `ON` if unmatched left rows must remain |
+| Selecting columns not grouped/aggregated | add them to `GROUP BY` or aggregate them |
+| Scalar subquery returns multiple rows | make it scalar or use `IN`/`EXISTS`/join |
+| Latest date but need other columns | join to the latest row or use `ROW_NUMBER()` |
+| Tie not handled before `LIMIT` | add tie-break columns in the same `ORDER BY` |
+| Assuming output order | use `ORDER BY` |
+| Treating `LIKE` as Regex | learn wildcard rules vs regex operators |
+| Forgetting `^`/`$` in validation | anchor the whole string |
+| Using `.` for a literal dot in Regex | use `[.]` or escape it |
+| Assuming CTE always makes query faster | CTE mainly improves readability; inspect plan if performance matters |
+
+## 35. Debugging checklist before submitting
+
+1. Does the query return exactly the required columns and aliases?
+2. Should unmatched rows remain? Choose `LEFT JOIN` if yes.
+3. Does the question want rows, unique users, or unique products?
+4. Can `NULL` change a comparison, count, sum, or `NOT IN`?
+5. Must categories with zero rows still appear?
+6. Are row filters in `WHERE` and aggregate filters in `HAVING`/`FILTER`?
+7. Are date boundaries inclusive/exclusive as required?
+8. Are ties handled with the required tie-breaker before `LIMIT`?
+9. Is output ordering explicitly required?
+10. Can integer division or division by zero change the result?
+11. Can a scalar subquery return more than one row?
+12. What does “consecutive” mean in this problem: adjacent IDs, dates, or ordered rows?
+13. Have you checked one-row, no-match, duplicate, tie, NULL, and boundary cases?
+
+## 36. Quick reference sheet
+
+| Task | SQL pattern |
+|---|---|
+| Filter | `WHERE condition` |
+| Sort | `ORDER BY col ASC/DESC` |
+| Top N | `ORDER BY ... LIMIT N` |
+| Unique rows | `SELECT DISTINCT ...` |
+| Match a list | `IN (...)` |
+| Pattern with wildcards | `LIKE` / `ILIKE` |
+| Regex match | `~` / `~*` |
+| Null check | `IS NULL` / `IS NOT NULL` |
+| Replace NULL | `COALESCE(value, fallback)` |
+| Avoid zero denominator | `NULLIF(denominator, 0)` |
+| Conditional output | `CASE WHEN ... THEN ... ELSE ... END` |
+| Group rows | `GROUP BY` |
+| Filter groups | `HAVING` |
+| Conditional aggregate | `COUNT(*) FILTER (WHERE ...)` |
+| Join matching rows | `INNER JOIN` |
+| Keep all left rows | `LEFT JOIN` |
+| No matching row | `NOT EXISTS` |
+| Scalar result from query | `(SELECT ...)` |
+| Named query step | `WITH name AS (...)` |
+| Combine results, deduplicate | `UNION` |
+| Combine results, keep duplicates | `UNION ALL` |
+| Rank within group | `ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)` |
+| Previous row | `LAG()` |
+| Next row | `LEAD()` |
+| Running total | `SUM(x) OVER (ORDER BY ...)` |
+| Month label | `TO_CHAR(date_col, 'YYYY-MM')` |
+| Add one day | `date_col + INTERVAL '1 day'` |
+| Round to 2 decimals | `ROUND(value::NUMERIC, 2)` |
+| Join text values | `STRING_AGG(value, ',' ORDER BY value)` |
+| Return changed rows | `RETURNING *` |
+
+## 37. LeetCode practice index
+
+| Problem | Main concept |
+|---|---|
+| 1378 | LEFT JOIN, missing match |
+| 1581 | LEFT JOIN anti-match, GROUP BY |
+| 197 | date/row filtering |
+| 1661 | self join, time difference, AVG |
+| 1280 | CROSS JOIN + LEFT JOIN, zero counts |
+| 570 | self join / manager relation |
+| 1934 | conditional aggregation, percentage |
+| 1251 | date-range join, weighted average |
+| 1633 | COUNT DISTINCT, percentage |
+| 1211 | AVG, FILTER, CASE, percentage |
+| 1193 | monthly grouping, TO_CHAR, FILTER, COALESCE |
+| 1174 | first order per customer, percentage |
+| 550 | first login, EXISTS, next-day interval |
+| 1141 | inclusive 30-day date range, COUNT DISTINCT |
+| 1070 | MIN year per product, correlated subquery |
+| 596 | GROUP BY + HAVING |
+| 619 | count occurrences, outer MAX |
+| 1045 | COUNT DISTINCT compared with total products |
+| 1731 | self join, COUNT, AVG, ROUND |
+| 1789 | CASE / grouping / UNION |
+| 610 | CASE and triangle inequalities |
+| 180 | consecutive rows, self join or LAG |
+| 1164 | latest change per product, row-value IN, UNION ALL |
+| 1204 | running total with window function |
+| 1907 | fixed categories and zero counts |
+| 1978 | NOT IN / NOT EXISTS / anti-join |
+| 626 | CASE, modulo, adjacent ID swap |
+| 1341 | aggregate ranking, tie-break, UNION ALL |
+| 1667 | UPPER, LOWER, LEFT, SUBSTRING |
+| 196 | DELETE duplicates, keep minimum ID |
+| 176 | second-highest distinct value |
+| 1484 | COUNT DISTINCT, STRING_AGG |
+| 1517 | Regex validation with `~`, anchors, character classes |
+
+## 38. Suggested learning order
+
+1. **Core querying:** SELECT, WHERE, DISTINCT, ORDER BY, LIMIT, NULL.
+2. **Expressions:** CASE, string functions, numeric functions, dates.
+3. **Aggregation:** COUNT, SUM, AVG, GROUP BY, HAVING, FILTER, percentages.
+4. **Joins:** INNER, LEFT, self join, anti-join.
+5. **Subqueries:** scalar, IN, EXISTS, correlated subqueries.
+6. **CTEs and set operations:** WITH, UNION, UNION ALL.
+7. **Window functions:** ROW_NUMBER, RANK, LAG, running totals.
+8. **Advanced PostgreSQL:** Regex, DISTINCT ON, JSONB, indexes, transactions.
+9. **Mixed practice:** solve without looking at templates; explain why edge cases work.
+
+**Final principle:** Do not memorise SQL only by problem number. Identify the task — filter, group, join, find missing rows, find first/latest row, rank, calculate a percentage, or compare consecutive rows — then choose the matching pattern and test edge cases.
